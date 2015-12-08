@@ -5,20 +5,25 @@ use ieee.std_logic_textio.all;
 library std;
 use std.textio.all;
 
-entity top is
-end top;
+entity faddtest is
+end faddtest;
 
-architecture testbench of top is
+architecture testbench of faddtest is
   constant step    : time := 5 ns;
   signal web       : std_logic := '0';
   signal dina      : std_logic_vector (31 downto 0) := (others => '0');
   signal dinb      : std_logic_vector (31 downto 0) := (others => '0');
   signal dout      : std_logic_vector (31 downto 0) := (others => '0');
+  signal dinaB     : std_logic_vector (31 downto 0) := (others => '0');
+  signal dinbB     : std_logic_vector (31 downto 0) := (others => '0');
+  signal doutB     : std_logic_vector (31 downto 0) := (others => '0');
+  signal error     : std_logic := '0';
   signal clk       : std_logic := '0';
   signal tb_output : std_logic_vector (31 downto 0) := (others => '0');
   file   infile    : TEXT open read_mode  is "sample.in";
   file   outfile   : TEXT open write_mode is "outfile.txt";
   component fadd port (
+    clk : in  std_logic;
     ina : in  std_logic_vector (31 downto 0);
     inb : in  std_logic_vector (31 downto 0);
     output : out std_logic_vector (31 downto 0));
@@ -46,10 +51,14 @@ begin
         dina <= vina;
         dinb <= vinb;
         dout <= vout;
+        dinaB<= dina;
+        dinbB<= dinb;
+        doutB<= dout;
       end if;
   end process;
 
   unit : fadd port map (
+    clk => clk,
     ina => dina,
     inb => dinb,
     output => tb_output);
@@ -57,13 +66,16 @@ begin
   writefile : process(clk)
     variable lo : line;
   begin
-    if falling_edge(clk) then
-      if not (tb_output = dout) then
-        write(lo,dina,left,33);
-        write(lo,dinb,left,33);
+    if rising_edge(clk) then
+      if not (tb_output = doutB) then
+        error <= '1';
+        write(lo,dinaB,left,33);
+        write(lo,dinbB,left,33);
         write(lo,tb_output,left,33);
-        write(lo,dout,left,32);
+        write(lo,doutB,left,32);
         writeline(outfile,lo);
+      else
+        error <= '0';
       end if;
     end if;
   end process;

@@ -4,6 +4,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity fadd is
   Port (
+    clk : in  std_logic;
     ina : in  STD_LOGIC_VECTOR (31 downto 0);
     inb : in  STD_LOGIC_VECTOR (31 downto 0);
     output : out STD_LOGIC_VECTOR (31  downto 0));
@@ -72,6 +73,15 @@ architecture struct of fadd is
   signal man3 : std_logic_vector (25 downto 0);
   signal man4 : std_logic_vector (22 downto 0);
 
+-- for pipeline
+  signal sigzeroB: std_logic;
+  signal siginfB : std_logic;
+  signal anszeroB: std_logic;
+  signal signB: std_logic; 
+  signal exp1B: std_logic_vector (7  downto 0); 
+  signal man1B: std_logic_vector (27 downto 0);
+
+
 begin
   cmpExp_U : cmpexp port map (
     ina_U     => ina,
@@ -93,10 +103,22 @@ begin
 
   man1 <= ('0' & winner2(26 downto 0)) - ('0' & loser2(26 downto 0)) when (subflag = '1') else
           ('0' & winner2(26 downto 0)) + ('0' & loser2(26 downto 0));
+          
+  karen : process(clk)
+  begin
+    if rising_edge(clk) then
+      signB <= sign;
+      man1B <= man1;
+    	exp1B <= exp1;
+      sigzeroB <= sigzero;
+      siginfB  <= siginf;
+      anszeroB <= anszero;
+    end if;
+  end process;
 
   moveUp_U : moveup port map (
-    man1_U => man1,
-    exp1_U => exp1,
+    man1_U => man1B,
+    exp1_U => exp1B,
     man2_U => man2,
     exp2_U => exp2,
 	 siginf2_U => siginf2);
@@ -115,10 +137,10 @@ begin
     exp4_U => exp4);
 
   output <= x"00000000"
-              when (anszero = '1') else
+              when (anszeroB = '1') else
             winner1
-              when ((sigzero = '1') or (siginf = '1')) else
+              when ((sigzeroB = '1') or (siginfB = '1')) else
 						x"00000000"
 						  when exp4( 7 downto 0) = x"00" and man4(22 downto 0) = "00000000000000000000000" else
-            sign & exp4( 7 downto 0) & man4(22 downto 0);
+            signB & exp4( 7 downto 0) & man4(22 downto 0);
 end struct;
