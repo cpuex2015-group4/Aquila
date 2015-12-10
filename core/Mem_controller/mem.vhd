@@ -43,7 +43,9 @@ begin
         zd<=test_mem(conv_integer(snaps(0).addr));
       else
         zd<=(others=>'Z');
-        test_mem(conv_integer(snaps(0).addr))<=zd;
+      end if;
+      if snaps(1).xwa='0' then
+        test_mem(conv_integer(snaps(1).addr))<=zd;
       end if;
     end if;
   end process;

@@ -14,10 +14,24 @@ library work;
 use work.global_types.all;
 use work.IO_interface.all;
 entity IO_top is
-  port(
-    MCLK1:in std_logic;
-    RS_RX:in std_logic;
-    RS_TX:out std_logic
+  port (
+    MCLK1 : in    std_logic;
+    RS_RX : in    std_logic;
+    RS_TX : out   std_logic;
+    ZD    : inout std_logic_vector(31 downto 0);
+    ZA    : out   std_logic_vector(19 downto 0);
+    XWA   : out   std_logic;
+    XE1   : out   std_logic;
+    E2A   : out   std_logic;
+    XE3   : out   std_logic;
+    XGA   : out   std_logic;
+    XZCKE : out   std_logic;
+    ADVA  : out   std_logic;
+    XLBO  : out   std_logic;
+    ZZA   : out   std_logic;
+    XFT   : out   std_logic;
+    XZBE  : out   std_logic_vector(3 downto 0);
+    ZCLKMA : out std_logic_vector(1 downto 0)
   );
 end IO_top;
 
@@ -34,13 +48,6 @@ architecture ACTUAL_UNIT_TEST of IO_top is
       );
   end component;
 
---constants
-
-  --initial_values
-
-  --components
-
-  --signals
 --clk
   signal iclk,clk:std_logic;
 --module
@@ -49,6 +56,26 @@ architecture ACTUAL_UNIT_TEST of IO_top is
 -- input latch
   signal serial_in_latch:std_logic;
 begin
+--templates
+  XE1<='0';
+  E2A<='1';
+  XE3<='0';
+  XGA<='0';
+  XZCKE<='0';
+  ADVA<='0';
+  XLBO<='1';
+  ZZA<='0';
+  XFT<='1';
+  XZBE<="0000";
+  ZCLKMA <=clk & clk;
+
+--ignores
+  ZD<=(others=>'Z');
+  ZA<=(others=>'0');
+  XWA<='1';
+
+
+
   process(clk)
   begin
     serial_in_latch<=RS_RX;

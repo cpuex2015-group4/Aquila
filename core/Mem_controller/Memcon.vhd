@@ -30,8 +30,8 @@ architecture twoproc of Memcon is
   constant snapshot_init:snapshot:=(
     WE=>false,
     RE=>false,
-    ADDR=>(others=>'U'),
-    DATA=>(others=>'U')
+    ADDR=>(others=>'0'),
+    DATA=>(others=>'0')
 	 );
 
   type snaps_type is array(0 to wait_clks-1) of snapshot;
@@ -44,13 +44,13 @@ architecture twoproc of Memcon is
   end record;
   constant r_init:reg_type :=(
 	snaps=>snaps_init,
-	data_from_sram =>	(others=>'U'),
+	data_from_sram =>	(others=>'0'),
 	hit =>false
 	);
 
   signal r,rin:reg_type:=r_init;
 begin
-  comb:process(r,Memcon_in)
+  comb:process(r,Memcon_in,SRAM_ZD)
    variable v:reg_type;
   begin
     v:=r;
@@ -68,7 +68,7 @@ begin
     end loop;
 
     v.hit:=r.snaps(wait_clks-1).re;
-    if r.snaps(wait_clks-1).re then
+    if not r.snaps(wait_clks-1).we then
       v.data_from_sram:=unsigned(sram_zd);
       sram_zd<=(others=>'Z');
     else
@@ -80,6 +80,7 @@ begin
     memcon_out.sram_xwa<=not memcon_in.we;
     memcon_out.hit<=r.hit;
     memcon_out.output<=r.data_from_sram;
+
   end process;
 
   regs:process(clk,rst)
