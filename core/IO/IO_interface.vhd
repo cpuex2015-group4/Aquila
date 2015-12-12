@@ -1,12 +1,10 @@
    --IO_sender_interface.vhd
-   --情報科学科 05-151007 今井雄毅
+   --
    --Wed Dec  2 15:03:46 2015
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.std_logic_arith.all;
-
+use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
 package IO_interface is

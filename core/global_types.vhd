@@ -15,9 +15,14 @@ package global_types is
 --  constant IO_section:std_logic_vector(15 downto 0):=x"0091";-- 460800 66MHz
                                                              -- doesn't work
   constant SRAM_ADDR_SIZE:integer:=20;
+  constant INST_ADDR_SIZE:integer:=15;
+  subtype INST_ADDR_TYPE is unsigned(INST_ADDR_SIZE-1 downto 0);
   subtype byte is unsigned(7 downto 0);
   subtype word is unsigned(31 downto 0);
   subtype std_byte is std_logic_vector(7 downto 0);
   subtype std_word is std_logic_vector(31 downto 0);
   subtype SRAM_ADDR_TYPE is unsigned(SRAM_ADDR_SIZE-1 downto 0);
+
+  constant INST_ADDR_MAX:INST_ADDR_TYPE:=(others=>'1');
+  constant SRAM_ADDR_MAX:SRAM_ADDR_TYPE:=(others=>'1');
 end package;
