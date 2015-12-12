@@ -13,7 +13,10 @@ package global_types is
 --  constant IO_section:std_logic_vector(15 downto 0):=x"0121";-- 230400 66MHz
                                                              -- doesn't work
 --  constant IO_section:std_logic_vector(15 downto 0):=x"0091";-- 460800 66MHz
-                                                             -- doesn't work
+  -- doesn't work
+
+
+  constant CLK_LENGTH:time:=15ns;
   constant SRAM_ADDR_SIZE:integer:=20;
   constant INST_ADDR_SIZE:integer:=15;
   subtype INST_ADDR_TYPE is unsigned(INST_ADDR_SIZE-1 downto 0);
@@ -25,4 +28,5 @@ package global_types is
 
   constant INST_ADDR_MAX:INST_ADDR_TYPE:=(others=>'1');
   constant SRAM_ADDR_MAX:SRAM_ADDR_TYPE:=(others=>'1');
+  constant IO_section_time:time:=to_integer(unsigned(IO_section))*CLK_LENGTH;
 end package;

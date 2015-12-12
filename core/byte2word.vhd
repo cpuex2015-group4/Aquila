@@ -6,7 +6,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library work;
-use global_types.all;
+use work.global_types.all;
 
 package byte2word_interface is
   type byte2word_in_type is record
