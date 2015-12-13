@@ -17,16 +17,28 @@ package global_types is
 
 
   constant CLK_LENGTH:time:=15ns;
+  constant WORD_SIZE:integer:=32;
+  constant BYTE_SIZE:integer:=8;
   constant SRAM_ADDR_SIZE:integer:=20;
   constant INST_ADDR_SIZE:integer:=15;
   subtype INST_ADDR_TYPE is unsigned(INST_ADDR_SIZE-1 downto 0);
   subtype byte is unsigned(7 downto 0);
   subtype word is unsigned(31 downto 0);
-  subtype std_byte is std_logic_vector(7 downto 0);
-  subtype std_word is std_logic_vector(31 downto 0);
+  subtype std_byte is std_logic_vector(BYTE_SIZE-1 downto 0);
+  subtype std_word is std_logic_vector(WORD_SIZE-1 downto 0);
   subtype SRAM_ADDR_TYPE is unsigned(SRAM_ADDR_SIZE-1 downto 0);
 
   constant INST_ADDR_MAX:INST_ADDR_TYPE:=(others=>'1');
   constant SRAM_ADDR_MAX:SRAM_ADDR_TYPE:=(others=>'1');
+  constant USER_SECTION_OFFSET:SRAM_ADDR_TYPE:=x"00400";
   constant IO_section_time:time:=to_integer(unsigned(IO_section))*CLK_LENGTH;
+
+  type init_information_type is record
+    init_PC:word;
+    init_hp:word;
+  end record;
+  constant init_information_init:init_information_type:=(
+    init_PC=>(others=>'X'),
+    init_hp=>(others=>'X')
+    );
 end package;

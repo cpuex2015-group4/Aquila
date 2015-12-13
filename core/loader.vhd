@@ -27,6 +27,7 @@ package loader_interface is
     inst_mem_we:boolean;
     inst_addr:inst_addr_type;
     loaded:boolean;
+    init_information:init_information_type;
   end record;
   constant loader_out_init:loader_out_type:=(
     data=>(others=>'0'),
@@ -35,7 +36,8 @@ package loader_interface is
     inst_mem_we=>false,
     mem_addr=>(others=>'1'),
     inst_addr=>(others=>'1'),
-    loaded=>false
+    loaded=>false,
+    init_information=>init_information_init
     );
 end package;
 
@@ -68,7 +70,7 @@ architecture twoproc of loader is
   end record;
   constant r_init:reg_type :=(
     count=>(others=>'0'),
-    PC=>(others=>'0'),
+    PC=>RESIZE(USER_SECTION_OFFSET,WORD_SIZE),
     text_size=>(others=>'X'),
     data_size=>(others=>'X'),
     entry_point=>(others=>'X'),
@@ -115,7 +117,7 @@ begin
           loader_out.data<=loader_in.IO_data;
           loader_out.inst_addr<=r.PC(INST_ADDR_SIZE-1 downto 0);
           v.PC:=r.PC+1;
-          if r.PC=r.text_size-1 then
+          if r.PC=USER_SECTION_OFFSET+r.text_size-1 then
             v.state:=data_recv;
           end if;
         else
@@ -130,7 +132,7 @@ begin
           loader_out.data<=loader_in.IO_data;
           loader_out.mem_addr<=r.PC(SRAM_ADDR_SIZE-1 downto 0);
           v.PC:=r.PC+1;
-          if r.PC=r.text_size+r.data_size-1 then
+          if r.PC=USER_SECTION_OFFSET+r.text_size+r.data_size-1 then
             v.state:=hlt;
           end if;
         else
@@ -144,6 +146,10 @@ begin
         loader_out.loaded<=true;
     end case;
     rin<=v;
+     loader_out.init_information<=(
+        init_PC=>r.entry_point,
+        init_hp=>USER_SECTION_OFFSET+r.text_size+r.data_size
+      );
   end process;
 
   regs:process(clk,rst)
