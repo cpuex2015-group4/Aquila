@@ -13,7 +13,7 @@ library work;
 use work.global_types.all;
 use work.IO_interface.all;
 use work.byte2word_interface.all;
---use work.loader_interface.all;
+use work.loader_interface.all;
 
 entity aquila is
   port (
@@ -49,13 +49,13 @@ architecture ACTUAL_UNIT_TEST of aquila is
       IO_module_out:out IO_module_out_type
       );
   end component;
---  component loader
---    port(
---      clk,rst:in  std_logic;
---      loader_in       :in  loader_in_type;
---      loader_out      :out loader_out_type
---      );
---  end component;
+  component loader
+    port(
+      clk,rst:in  std_logic;
+      loader_in       :in  loader_in_type;
+      loader_out      :out loader_out_type
+      );
+  end component;
 
   component byte2word
     port(
@@ -69,9 +69,9 @@ architecture ACTUAL_UNIT_TEST of aquila is
 --module
   signal IO_module_in:IO_module_in_type:=IO_module_in_init;
   signal IO_module_out:IO_module_out_type:=IO_module_out_init;
---  signal loader_in:loader_in_type:=loader_in_init;
---  signal loader_out:loader_out_type:=loader_out_init;
-   signal byte2word_in:byte2word_in_type:=byte2word_in_init;
+  signal loader_in:loader_in_type:=loader_in_init;
+  signal loader_out:loader_out_type:=loader_out_init;
+  signal byte2word_in:byte2word_in_type:=byte2word_in_init;
   signal byte2word_out:byte2word_out_type:=byte2word_out_init;
 -- input latch
   signal serial_in_latch:std_logic;
@@ -94,8 +94,6 @@ begin
   ZA<=(others=>'0');
   XWA<='1';
 
-
-
   process(clk)
   begin
     serial_in_latch<=RS_RX;
@@ -108,12 +106,12 @@ begin
     IO_module_in=>IO_module_in,
     IO_module_out=>IO_module_out
     );
---  LD:loader port map(
---    clk=>clk,
---    rst=>'0',
---    loader_in=>loader_in,
---    loader_out=>loader_out
---    );
+  LD:loader port map(
+    clk=>clk,
+    rst=>'0',
+    loader_in=>loader_in,
+    loader_out=>loader_out
+    );
   B2W:byte2word port map(
     clk=>clk,
     rst=>'0',
@@ -125,6 +123,9 @@ begin
   byte2word_in.ready<= false when IO_module_out.empty='1' else
                     true;
   byte2word_in.RE<=true;
+  loader_in.activate<=true;
+  loader_in.IO_empty<=not byte2word_out.ready;
+  loader_in.IO_data<=byte2word_out.word_data;
   IO_module_in.serial_in<=serial_in_latch;
   IO_module_in.send_data<=IO_module_out.recv_data;
   IO_module_in.we<=not IO_module_out.empty;
