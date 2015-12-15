@@ -14,6 +14,7 @@ use work.global_types.all;
 use work.IO_interface.all;
 use work.byte2word_interface.all;
 use work.loader_interface.all;
+use work.memcon_interface.all;
 
 entity aquila is
   port (
@@ -64,6 +65,15 @@ architecture ACTUAL_UNIT_TEST of aquila is
       byte2word_out:out byte2word_out_type
       );
   end component;
+
+  component Memcon
+    port(
+      clk,rst:            in      std_logic;
+      Memcon_in:          in      Memcon_in_type;
+      Memcon_out:         out     Memcon_out_type;
+      SRAM_ZD:           inout    std_logic_vector(31 downto 0)
+      );
+  end component;
 --clk
   signal iclk,clk:std_logic;
 --module
@@ -73,6 +83,8 @@ architecture ACTUAL_UNIT_TEST of aquila is
   signal loader_out:loader_out_type:=loader_out_init;
   signal byte2word_in:byte2word_in_type:=byte2word_in_init;
   signal byte2word_out:byte2word_out_type:=byte2word_out_init;
+  signal memcon_in:Memcon_in_type:=Memcon_in_init;
+  signal memcon_out:Memcon_out_type:=Memcon_out_init;
 -- input latch
   signal serial_in_latch:std_logic;
 begin
@@ -89,10 +101,6 @@ begin
   XZBE<="0000";
   ZCLKMA <=clk & clk;
 
---ignores
-  ZD<=(others=>'Z');
-  ZA<=(others=>'0');
-  XWA<='1';
 
   process(clk)
   begin
@@ -118,17 +126,42 @@ begin
     byte2word_in=>byte2word_in,
     byte2word_out=>byte2word_out
     );
+
+  MC:MEMCON port map(
+    clk=>clk,
+    rst=>'0',
+    Memcon_in=>Memcon_in,
+    Memcon_out=>Memcon_out,
+    SRAM_ZD=>ZD
+    );
+--IO
+  IO_module_in.serial_in<=serial_in_latch;
+  IO_module_in.send_data<=IO_module_out.recv_data;
+  IO_module_in.we<=not IO_module_out.empty;
+  IO_module_In.re<=not IO_module_out.empty;
+
+
+  --LD
+  loader_in.activate<=true;
+  loader_in.ready<= byte2word_out.ready;
+  loader_in.IO_data<=byte2word_out.word_data;
+
+  --B2W
   byte2word_in.activate<=true;
   byte2word_in.byte_data<=unsigned(IO_module_out.recv_data);
   byte2word_in.ready<= false when IO_module_out.empty='1' else
                     true;
-  byte2word_in.RE<=true;
-  loader_in.activate<=true;
-  loader_in.IO_empty<=not byte2word_out.ready;
-  loader_in.IO_data<=byte2word_out.word_data;
-  IO_module_in.serial_in<=serial_in_latch;
-  IO_module_in.send_data<=IO_module_out.recv_data;
-  IO_module_in.we<=not IO_module_out.empty;
-  IO_module_in.re<=not IO_module_out.empty;
+  byte2word_in.RE<=loader_out.IO_RE;
+
+  --MEMCON
+  Memcon_in.addr<=loader_out.mem_addr;
+  Memcon_in.input<=loader_out.data;
+  Memcon_in.WE<=loader_out.mem_we;
+  Memcon_in.RE<=false;
+
+  --PORT
+  ZA<=std_logic_vector(Memcon_out.SRAM_ADDR);
+  XWA<= '1' when Memcon_out.SRAM_XWA else
+        '0';
   RS_TX<=IO_module_out.serial_out;
 end ACTUAL_UNIT_TEST;

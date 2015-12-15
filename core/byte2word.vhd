@@ -71,12 +71,10 @@ begin
       --########################main logic########################
       if r.ready then
         if byte2word_in.RE then
-          byte2word_out.word_data<=r.word_data;
           v.ready:=false;
         end if;
       else
         if byte2word_in.ready then
-          byte2word_out.IO_RE<=true;
           v.word_data(31-8*to_integer(r.has_read_count)
                       downto 24-8*to_integer(r.has_read_count))
             :=byte2word_in.byte_data;
@@ -88,16 +86,15 @@ begin
             v.has_read_count:=r.has_read_count+"01";
           end if;
         else
-          byte2word_out.IO_RE<=false;
         end if;
       end if;
       --######################## Out and rin######################
       rin<=v;
-      if r.ready then
-        byte2word_out.ready<=true;
-      else
-        byte2word_out.ready<=false;
-      end if;
+      byte2word_out.IO_RE<=(not r.ready)and byte2word_in.ready;
+      byte2word_out.ready<=r.ready;
+      byte2word_out.word_data<=r.word_data;
+    else
+      byte2word_out<=byte2word_out_init;
     end if;
   end process;
 

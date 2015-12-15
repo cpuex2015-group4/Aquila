@@ -64,7 +64,16 @@ ARCHITECTURE behavior OF aquila_tb IS
          ZCLKMA : OUT  std_logic_vector(1 downto 0)
         );
     END COMPONENT;
-    
+
+    component mem
+      port(
+        ZD    : inout std_logic_vector(31 downto 0):=(others=>'Z');
+        ZA    : in   std_logic_vector(19 downto 0);
+        XWA   : in   std_logic;
+        clk   : in   std_logic
+        );
+    end component;
+
 
    --Inputs
    signal MCLK1 : std_logic := '0';
@@ -123,6 +132,8 @@ BEGIN
           ZCLKMA => ZCLKMA
         );
 
+
+   m:mem port map (ZD=>ZD,ZA=>ZA,XWA=>XWA,clk=>MCLK1);
    -- Clock process definitions
    MCLK1_process :process
    begin

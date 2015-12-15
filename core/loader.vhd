@@ -11,12 +11,12 @@ use work.global_types.all;
 package loader_interface is
   type loader_in_type is record
    activate:boolean;
-   IO_empty:boolean;
+   ready:boolean;
    IO_data:word;
   end record;
   constant loader_in_init:loader_in_type:=(
     activate=>false,
-    IO_empty=>true,
+    ready=>true,
     IO_data=>(others=>'0')
     );
   type loader_out_type is record
@@ -85,11 +85,12 @@ begin
     --########################main logic########################
     case r.state is
       when init=>
+        loader_out<=loader_out_init;
         if loader_in.activate then
           v.state:=header;
         end if;
       when header=>
-        if not loader_in.IO_empty then
+        if loader_in.ready then
           loader_out.IO_RE<=true;
           case r.count is
             when "00"=>
@@ -111,7 +112,7 @@ begin
           loader_out.IO_RE<=false;
         end if;
       when text_recv=>
-        if not loader_in.IO_empty then
+        if loader_in.ready then
           loader_out.IO_RE<=true;
           loader_out.inst_mem_we<=true;
           loader_out.data<=loader_in.IO_data;
@@ -126,7 +127,7 @@ begin
         end if;
       when data_recv=>
         loader_out.inst_mem_we<=false;
-        if not loader_in.IO_empty then
+        if loader_in.ready then
           loader_out.IO_RE<=true;
           loader_out.mem_we<=true;
           loader_out.data<=loader_in.IO_data;
