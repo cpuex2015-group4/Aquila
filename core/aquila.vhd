@@ -15,6 +15,7 @@ use work.IO_interface.all;
 use work.byte2word_interface.all;
 use work.loader_interface.all;
 use work.memcon_interface.all;
+use work.main_interface.all;
 
 entity aquila is
   port (
@@ -74,6 +75,14 @@ architecture ACTUAL_UNIT_TEST of aquila is
       SRAM_ZD:           inout    std_logic_vector(31 downto 0)
       );
   end component;
+
+  component main
+    port(
+      clk,rst:in  std_logic;
+      port_in       :in  main_in_type;
+      port_out      :out main_out_type
+      );
+  end component;
 --clk
   signal iclk,clk:std_logic;
 --module
@@ -85,6 +94,8 @@ architecture ACTUAL_UNIT_TEST of aquila is
   signal byte2word_out:byte2word_out_type:=byte2word_out_init;
   signal memcon_in:Memcon_in_type:=Memcon_in_init;
   signal memcon_out:Memcon_out_type:=Memcon_out_init;
+  signal main_in:main_in_type:=main_in_init;
+  signal main_out:main_out_type:=main_out_init;
 -- input latch
   signal serial_in_latch:std_logic;
 begin
@@ -134,12 +145,22 @@ begin
     Memcon_out=>Memcon_out,
     SRAM_ZD=>ZD
     );
+
+  MAIN_UNIT:MAIN port map(
+    clk=>clk,
+    rst=>'0',
+    port_in=>main_in,
+    port_out=>main_out
+  );
+
 --IO
   IO_module_in.serial_in<=serial_in_latch;
-  IO_module_in.send_data<=IO_module_out.recv_data;
-  IO_module_in.we<=not IO_module_out.empty;
-  IO_module_In.re<=not IO_module_out.empty;
-
+--  IO_module_in.send_data<=IO_module_out.recv_data;for the loopback test
+--  IO_module_in.we<=not IO_module_out.empty;
+--  IO_module_In.re<=not IO_module_out.empty;
+  IO_module_in.send_data<=main_out.IO_data;
+  IO_module_in.we<=main_out.IO_WE;
+  IO_module_in.re<=main_out.IO_RE;
 
   --LD
   loader_in.activate<=true;
@@ -154,10 +175,18 @@ begin
   byte2word_in.RE<=loader_out.IO_RE;
 
   --MEMCON
-  Memcon_in.addr<=loader_out.mem_addr;
-  Memcon_in.input<=loader_out.data;
-  Memcon_in.WE<=loader_out.mem_we;
-  Memcon_in.RE<=false;
+  Memcon_in.addr<=main_out.Mem_addr when loader_out.loaded else
+                   loader_out.mem_addr;
+  Memcon_in.input<=main_out.Mem_data when loader_out.loaded else
+                    loader_out.data;
+  Memcon_in.WE<=main_out.Mem_WE when loader_out.loaded else
+                 loader_out.mem_we;
+  Memcon_in.RE<=main_out.Mem_RE when loader_out.loaded else
+                 false;
+
+  --MAIN
+  main_in.activate<=loader_out.loaded;
+  main_in.init_information<=loader_out.init_information;
 
   --PORT
   ZA<=std_logic_vector(Memcon_out.SRAM_ADDR);
