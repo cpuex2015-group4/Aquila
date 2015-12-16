@@ -34,7 +34,7 @@ package main_interface is
     );
   type main_out_type is record
     PC:word;
-    Mem_addr:word;
+    Mem_addr:SRAM_ADDR_TYPE;
     Mem_data:word;
     Mem_WE:boolean;
     Mem_RE:boolean;
@@ -43,8 +43,8 @@ package main_interface is
     IO_WE:boolean;
   end record;
   constant main_out_init:main_out_type:=(
-    PC=>(others=>'X'),
-    Mem_addr=>(others=>'X'),
+    PC=>(others=>'1'),
+    Mem_addr=>(others=>'1'),
     Mem_data=>(others=>'X'),
     Mem_WE=>false,
     Mem_RE=>false,
