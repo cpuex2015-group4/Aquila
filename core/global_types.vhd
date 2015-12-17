@@ -41,4 +41,25 @@ package global_types is
     init_PC=>(others=>'X'),
     init_hp=>(others=>'X')
     );
+
+  function to_boolean(A:std_logic) return boolean;
+  function to_std_logic(A:boolean) return std_logic;
 end package;
+
+package body global_types is
+  function to_boolean(A:std_logic) return boolean is
+  begin
+    return A='1';
+  end function;
+
+  function to_std_logic(A:boolean) return std_logic is
+	variable v:std_logic;
+  begin
+    if A then 
+		v:='1';
+	else 
+		v:='0';
+	end if;
+	return v;
+  end function;
+end global_types;

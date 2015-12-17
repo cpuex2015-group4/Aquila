@@ -27,7 +27,7 @@ package main_interface is
     IO_full=>false,
     IO_empty=>false,
     IO_spilled=>false,
-	 IO_data=>(others=>'X'),
+    IO_data=>(others=>'X'),
     Mem_data=>(others=>'X'),
     Mem_hit=>false,
     init_information=>init_information_init
@@ -86,18 +86,22 @@ architecture twoproc of main is
 
   type Fetch_reg_t is record
     PC:word;
-    inst:word;
   end record;
   constant Fetch_reg_init:Fetch_reg_t:=(
-    PC=>(others=>'X'),
-    inst=>(others=>'X')
+    PC=>(others=>'X')
   );
 
   type Decode_reg_t is record
     PC:word;
+    inst_info:inst_info_type;
+    operand1:word;
+    operand2:word;
   end record;
     constant Decode_reg_init:Decode_reg_t:=(
-    PC=>(others=>'X')
+    PC=>(others=>'X'),
+	 inst_info=>inst_info_init,
+	 operand1=>(others=>'X'),
+	 operand2=>(others=>'X')
   );
     type Exe_reg_t is record
       PC:word;
@@ -116,6 +120,7 @@ architecture twoproc of main is
     state:state_type;
     output:main_out_type;
     regfile:reg_file_t;
+    fregfile:reg_file_t;
     PC:PC_reg_t;
     F:Fetch_reg_t;
     D:Decode_reg_t;
@@ -125,7 +130,8 @@ architecture twoproc of main is
   constant r_init:reg_type :=(
     state=>init,
     output=>main_out_init,
-	 regfile=>reg_file_init,
+    regfile=>reg_file_init,
+    fregfile=>reg_file_init,
     PC=>PC_reg_init,
     F=>Fetch_reg_init,
     D=>Decode_reg_init,
@@ -136,8 +142,12 @@ architecture twoproc of main is
 begin
   comb:process(r,port_in)
     variable v:reg_type;
+    variable vnextPC:word;
+    variable inst_info:inst_info_type;
   begin
     v:=r;
+    vnextPC:=(others=>'X');
+    inst_info:=inst_info_init;
     --########################main logic########################
     case r.state is
       when init=>
@@ -146,11 +156,28 @@ begin
         end if;
       when ready=>
         v.regfile(0):=(others=>'0');
-        
+        v.fregfile(0):=(others=>'0');
         v.regfile(reg_heap):=port_in.init_information.init_hp;
         v.regfile(reg_stack):=RESIZE(SRAM_ADDR_MAX,32);
         v.PC.PC:=port_in.init_information.init_PC;
+        v.state:=running;
       when running=>
+        --PC
+        vnextPC:=r.PC.PC+1;
+        v.PC.PC:=vnextPC;
+        v.output.PC:=vnextPC;
+
+        --F
+        v.F.PC:=r.PC.PC;
+
+        --D
+        v.D.PC:=r.F.PC;
+        inst_info:=Decode(port_in.instruction);
+
+        --Ex
+        v.Ex.PC:=r.D.PC;
+
+        --Wb
       when hlt=>
     end case;
     --######################## Out and rin######################
