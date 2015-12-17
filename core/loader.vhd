@@ -67,6 +67,7 @@ architecture twoproc of loader is
     data_size:word;
     entry_point:word;
     state:state_type;
+    port_out:loader_out_type;
   end record;
   constant r_init:reg_type :=(
     count=>(others=>'0'),
@@ -74,7 +75,8 @@ architecture twoproc of loader is
     text_size=>(others=>'X'),
     data_size=>(others=>'X'),
     entry_point=>(others=>'X'),
-    state=>init
+    state=>init,
+    port_out=>loader_out_init
     );
   signal r,rin:reg_type:=r_init;
 begin
@@ -85,13 +87,12 @@ begin
     --########################main logic########################
     case r.state is
       when init=>
-        loader_out<=loader_out_init;
         if loader_in.activate then
           v.state:=header;
         end if;
       when header=>
         if loader_in.ready then
-          loader_out.IO_RE<=true;
+          v.port_out.IO_RE:=true;
           case r.count is
             when "00"=>
               v.count:=r.count+1;
@@ -109,45 +110,46 @@ begin
               null;
           end case;
         else
-          loader_out.IO_RE<=false;
+          v.port_out.IO_RE:=false;
         end if;
       when text_recv=>
         if loader_in.ready then
-          loader_out.IO_RE<=true;
-          loader_out.inst_mem_we<=true;
-          loader_out.data<=loader_in.IO_data;
-          loader_out.inst_addr<=r.PC(INST_ADDR_SIZE-1 downto 0);
+          v.port_out.IO_RE:=true;
+          v.port_out.inst_mem_we:=true;
+          v.port_out.data:=loader_in.IO_data;
+          v.port_out.inst_addr:=r.PC(INST_ADDR_SIZE-1 downto 0);
           v.PC:=r.PC+1;
           if r.PC=USER_SECTION_OFFSET+r.text_size-1 then
             v.state:=data_recv;
           end if;
         else
-          loader_out.IO_RE<=false;
-          loader_out.inst_mem_we<=false;
+          v.port_out.IO_RE:=false;
+          v.port_out.inst_mem_we:=false;
         end if;
       when data_recv=>
-        loader_out.inst_mem_we<=false;
+        v.port_out.inst_mem_we:=false;
         if loader_in.ready then
-          loader_out.IO_RE<=true;
-          loader_out.mem_we<=true;
-          loader_out.data<=loader_in.IO_data;
-          loader_out.mem_addr<=r.PC(SRAM_ADDR_SIZE-1 downto 0);
+          v.port_out.IO_RE:=true;
+          v.port_out.mem_we:=true;
+          v.port_out.data:=loader_in.IO_data;
+          v.port_out.mem_addr:=r.PC(SRAM_ADDR_SIZE-1 downto 0);
           v.PC:=r.PC+1;
           if r.PC=USER_SECTION_OFFSET+r.text_size+r.data_size-1 then
             v.state:=hlt;
           end if;
         else
-          loader_out.IO_RE<=false;
-          loader_out.mem_we<=false;
+          v.port_out.IO_RE:=false;
+          v.port_out.mem_we:=false;
         end if;
       when hlt=>
-        loader_out.IO_RE<=false;
-        loader_out.mem_we<=false;
-        loader_out.inst_mem_we<=false;
-        loader_out.loaded<=true;
+        v.port_out.IO_RE:=false;
+        v.port_out.mem_we:=false;
+        v.port_out.inst_mem_we:=false;
+        v.port_out.loaded:=true;
     end case;
     rin<=v;
-     loader_out.init_information<=(
+    loader_out<=r.port_out;
+    loader_out.init_information<=(
         init_PC=>r.entry_point,
         init_hp=>USER_SECTION_OFFSET+r.text_size+r.data_size
       );

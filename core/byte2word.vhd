@@ -55,11 +55,13 @@ architecture twoproc of byte2word is
     word_data:word;
     ready:boolean;
     has_read_count:unsigned(1 downto 0);
+    port_out:byte2word_out_type;
   end record;
   constant r_init:reg_type :=(
     word_data=>(others=>'-'),
     ready=>false,
-    has_read_count=>"00"
+    has_read_count=>"00",
+    port_out=>byte2word_out_init
     );
   signal r,rin:reg_type:=r_init;
 begin
@@ -70,11 +72,14 @@ begin
       v:=r;
       --########################main logic########################
       if r.ready then
+        v.port_out.IO_RE:=false;
         if byte2word_in.RE then
           v.ready:=false;
+          v.port_out.ready:=false;
         end if;
       else
         if byte2word_in.ready then
+          v.port_out.IO_RE:=true;
           v.word_data(31-8*to_integer(r.has_read_count)
                       downto 24-8*to_integer(r.has_read_count))
             :=byte2word_in.byte_data;
@@ -82,14 +87,18 @@ begin
           if r.has_read_count=3 then
             v.has_read_count:=(others=>'0');
             v.ready:=true;
+            v.port_out.ready:=true;
+            v.port_out.word_data:=v.word_data;
           else
             v.has_read_count:=r.has_read_count+"01";
           end if;
         else
+          v.port_out.IO_RE:=false;
         end if;
       end if;
       --######################## Out and rin######################
       rin<=v;
+      byte2word_out<=r.port_out;
       byte2word_out.IO_RE<=(not r.ready)and byte2word_in.ready;
       byte2word_out.ready<=r.ready;
       byte2word_out.word_data<=r.word_data;

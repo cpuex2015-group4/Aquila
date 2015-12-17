@@ -1,6 +1,6 @@
-   --ISA.vhd
-   --Yuki Imai
-   --Tue Dec 15 22:55:50 2015
+--ISA.vhd
+--Yuki Imai
+--Tue Dec 15 22:55:50 2015
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -112,7 +112,7 @@ package ISA is
     immediate=>(others=>'X'),
     funct=>(others=>'0'),
     ALU=>ALU_NOP
-  );
+    );
 
   function Decode(inst:word) return inst_info_type;
 end package;
@@ -199,9 +199,9 @@ package body ISA is
                 info.ALU:=ALU_NOP;
             end case;
           end if;
-			 end if;
-        end case;
+        end if;
+    end case;
 
-        return info;
+    return info;
   end function;
 end ISA;
