@@ -107,7 +107,7 @@ ARCHITECTURE behavior OF aquila_tb IS
 	  to_unsigned(0,32),
 	  to_unsigned(3,32),
   	  to_unsigned(1,32),
-	  to_unsigned(0,32),
+	  to_unsigned(1024,32),
           B"0_00000_00001_00000_00000_0000000010_0",
           B"0_00000_00000_00001_00000_0000000011_0",
           B"0_00000_00000_00000_00000_0000000000_0",
