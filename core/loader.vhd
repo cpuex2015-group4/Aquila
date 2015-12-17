@@ -21,7 +21,6 @@ package loader_interface is
     );
   type loader_out_type is record
     data:word;
-    IO_RE:boolean;
     mem_we:boolean;
     mem_addr:SRAM_ADDR_TYPE;
     inst_mem_we:boolean;
@@ -31,7 +30,6 @@ package loader_interface is
   end record;
   constant loader_out_init:loader_out_type:=(
     data=>(others=>'0'),
-    IO_RE=>false,
     mem_we=>false,
     inst_mem_we=>false,
     mem_addr=>(others=>'1'),
@@ -92,7 +90,6 @@ begin
         end if;
       when header=>
         if loader_in.ready then
-          v.port_out.IO_RE:=true;
           case r.count is
             when "00"=>
               v.count:=r.count+1;
@@ -110,11 +107,9 @@ begin
               null;
           end case;
         else
-          v.port_out.IO_RE:=false;
         end if;
       when text_recv=>
         if loader_in.ready then
-          v.port_out.IO_RE:=true;
           v.port_out.inst_mem_we:=true;
           v.port_out.data:=loader_in.IO_data;
           v.port_out.inst_addr:=r.PC(INST_ADDR_SIZE-1 downto 0);
@@ -123,13 +118,11 @@ begin
             v.state:=data_recv;
           end if;
         else
-          v.port_out.IO_RE:=false;
           v.port_out.inst_mem_we:=false;
         end if;
       when data_recv=>
         v.port_out.inst_mem_we:=false;
         if loader_in.ready then
-          v.port_out.IO_RE:=true;
           v.port_out.mem_we:=true;
           v.port_out.data:=loader_in.IO_data;
           v.port_out.mem_addr:=r.PC(SRAM_ADDR_SIZE-1 downto 0);
@@ -138,21 +131,19 @@ begin
             v.state:=hlt;
           end if;
         else
-          v.port_out.IO_RE:=false;
           v.port_out.mem_we:=false;
         end if;
       when hlt=>
-        v.port_out.IO_RE:=false;
         v.port_out.mem_we:=false;
         v.port_out.inst_mem_we:=false;
         v.port_out.loaded:=true;
-    end case;
-    rin<=v;
-    loader_out<=r.port_out;
-    loader_out.init_information<=(
+        v.port_out.init_information:=(
         init_PC=>r.entry_point,
         init_hp=>USER_SECTION_OFFSET+r.text_size+r.data_size
       );
+    end case;
+    rin<=v;
+    loader_out<=r.port_out;
   end process;
 
   regs:process(clk,rst)

@@ -208,7 +208,6 @@ begin
   byte2word_in.byte_data<=unsigned(IO_module_out.recv_data);
   byte2word_in.ready<= false when IO_module_out.empty='1' else
                     true;
-  byte2word_in.RE<=loader_out.IO_RE;
 
   --MEMCON
   Memcon_in.addr<=main_out.Mem_addr when loader_out.loaded else

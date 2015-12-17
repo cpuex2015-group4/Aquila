@@ -13,13 +13,11 @@ package byte2word_interface is
     activate:boolean;
     byte_data:byte;
     ready:boolean;
-    RE:boolean;
   end record;
   constant byte2word_in_init:byte2word_in_type:=(
     activate=>false,
     byte_data=>(others=>'X'),
-    ready=>false,
-    RE=>false
+    ready=>false
     );
   type byte2word_out_type is record
     word_data:word;
@@ -73,12 +71,11 @@ begin
       --########################main logic########################
       if r.ready then
         v.port_out.IO_RE:=false;
-        if byte2word_in.RE then
-          v.ready:=false;
-          v.port_out.ready:=false;
-        end if;
+        v.port_out.word_data:=(others=>'X');
+        v.port_out.ready:=false;
+        v.ready:=false;
       else
-        if byte2word_in.ready then
+        if byte2word_in.ready and not(r.port_out.IO_RE) then
           v.port_out.IO_RE:=true;
           v.word_data(31-8*to_integer(r.has_read_count)
                       downto 24-8*to_integer(r.has_read_count))
@@ -99,9 +96,6 @@ begin
       --######################## Out and rin######################
       rin<=v;
       byte2word_out<=r.port_out;
-      byte2word_out.IO_RE<=(not r.ready)and byte2word_in.ready;
-      byte2word_out.ready<=r.ready;
-      byte2word_out.word_data<=r.word_data;
     else
       byte2word_out<=byte2word_out_init;
     end if;
