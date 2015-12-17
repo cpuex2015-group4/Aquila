@@ -89,9 +89,9 @@ package ISA is
     MEM_RE:boolean;
     IO_WE:boolean;
     IO_RE:boolean;
-    rd_addr:reg_addr_type;
-    rs_addr:reg_addr_type;
-    rt_addr:reg_addr_type;
+    rd:reg_addr_type;
+    rs:reg_addr_type;
+    rt:reg_addr_type;
     immediate:immediate_type;
     funct:fct_type;
     ALU:ALU_control_type;
@@ -106,9 +106,9 @@ package ISA is
     MEM_RE=>false,
     IO_WE=>false,
     IO_RE=>false,
-    rd_addr=>(others=>'0'),
-    rs_addr=>(others=>'0'),
-    rt_addr=>(others=>'0'),
+    rd=>(others=>'0'),
+    rs=>(others=>'0'),
+    rt=>(others=>'0'),
     immediate=>(others=>'X'),
     funct=>(others=>'0'),
     ALU=>ALU_NOP
@@ -127,9 +127,9 @@ package body ISA is
     info:=inst_info_init;
     info.Opecode:=(inst(30 downto 26));
     bit_image:=inst(27 downto 26);
-    info.rd_addr:=inst(25 downto 21);
-    info.rs_addr:=inst(20 downto 16);
-    info.rt_addr:=inst(15 downto 11);
+    info.rd:=inst(25 downto 21);
+    info.rs:=inst(20 downto 16);
+    info.rt:=inst(15 downto 11);
     info.funct:=inst(10 downto 1);
     info.immediate:=inst(15 downto 0);
     opt:=inst(29 downto 28);

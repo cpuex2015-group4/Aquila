@@ -96,18 +96,26 @@ architecture twoproc of main is
     inst_info:inst_info_type;
     operand1:word;
     operand2:word;
+    NOP:boolean;
   end record;
     constant Decode_reg_init:Decode_reg_t:=(
-    PC=>(others=>'X'),
-	 inst_info=>inst_info_init,
-	 operand1=>(others=>'X'),
-	 operand2=>(others=>'X')
+      PC=>(others=>'X'),
+      inst_info=>inst_info_init,
+      operand1=>(others=>'X'),
+      operand2=>(others=>'X'),
+      NOP=>false
   );
     type Exe_reg_t is record
       PC:word;
+      inst_info:inst_info_type;
+      result:word;
+      NOP:boolean;
   end record;
     constant Exe_reg_init:Exe_reg_t:=(
-    PC=>(others=>'X')
+    PC=>(others=>'X'),
+    inst_info=>inst_info_init,
+    result=>(others=>'X'),
+    NOP=>false
   );
   type WB_reg_t is record
     PC:word;
@@ -161,6 +169,7 @@ begin
         v.regfile(reg_stack):=RESIZE(SRAM_ADDR_MAX,32);
         v.PC.PC:=port_in.init_information.init_PC;
         v.state:=running;
+        v.output.PC:=port_in.init_information.init_PC;
       when running=>
         --PC
         vnextPC:=r.PC.PC+1;
@@ -171,12 +180,26 @@ begin
         v.F.PC:=r.PC.PC;
 
         --D
+        v.D.NOP:=false;
         v.D.PC:=r.F.PC;
         inst_info:=Decode(port_in.instruction);
-
+        v.D.inst_info:=inst_info;
+        if inst_info.IO_RE then
+          if port_in.IO_empty then
+            v.PC:=r.PC;
+            v.output.PC:=v.output.PC;
+            v.F:=r.F;
+            v.D.NOP:=true;
+          else
+            v.output.IO_RE:=true;
+          end if;
+        end if;
+        v.D.operand1:=r.regfile(to_integer(inst_info.rs));
+        v.D.operand2:=r.regfile(to_integer(inst_info.rt));
         --Ex
         v.Ex.PC:=r.D.PC;
-
+        v.ex.inst_info:=r.ex.inst_info;
+        V.Ex.result:=r.D.operand1;
         --Wb
       when hlt=>
     end case;
@@ -194,3 +217,4 @@ begin
     end if;
   end process;
 end twoproc;
+
