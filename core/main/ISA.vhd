@@ -95,6 +95,7 @@ package ISA is
     immediate:immediate_type;
     funct:fct_type;
     ALU:ALU_control_type;
+    HLT:boolean;
   end record;
 
   constant inst_info_init:inst_info_type:=(
@@ -111,7 +112,8 @@ package ISA is
     rt=>(others=>'0'),
     immediate=>(others=>'X'),
     funct=>(others=>'0'),
-    ALU=>ALU_NOP
+    ALU=>ALU_NOP,
+    HLT=>false
     );
 
   function Decode(inst:word) return inst_info_type;
@@ -125,6 +127,7 @@ package body ISA is
   begin
     opt:=(others=>'X');
     info:=inst_info_init;
+    info.HLT:=(inst=0);
     info.Opecode:=(inst(30 downto 26));
     bit_image:=inst(27 downto 26);
     info.rd:=inst(25 downto 21);

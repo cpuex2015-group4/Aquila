@@ -97,25 +97,29 @@ architecture twoproc of main is
     operand1:word;
     operand2:word;
     NOP:boolean;
+    HLT:boolean;
   end record;
     constant Decode_reg_init:Decode_reg_t:=(
       PC=>(others=>'X'),
       inst_info=>inst_info_init,
       operand1=>(others=>'X'),
       operand2=>(others=>'X'),
-      NOP=>true
+      NOP=>true,
+      HLT=>false
   );
     type Exe_reg_t is record
       PC:word;
       inst_info:inst_info_type;
       result:word;
       NOP:boolean;
+      HLT:boolean;
   end record;
     constant Exe_reg_init:Exe_reg_t:=(
     PC=>(others=>'X'),
     inst_info=>inst_info_init,
     result=>(others=>'X'),
-    NOP=>true
+    NOP=>true,
+    HLT=>false
   );
   type WB_reg_t is record
     PC:word;
@@ -215,6 +219,11 @@ begin
             v.output.IO_WE:=true;
             v.output.IO_data:=v.D.operand1;
           end if;
+        end if;
+
+        if inst_info.HLT then
+          v.output:=main_out_init;
+          v.state:=hlt;
         end if;
         --Ex
         v.Ex.NOP:=r.D.NOP;
