@@ -103,7 +103,7 @@ architecture twoproc of main is
       inst_info=>inst_info_init,
       operand1=>(others=>'X'),
       operand2=>(others=>'X'),
-      NOP=>false
+      NOP=>true
   );
     type Exe_reg_t is record
       PC:word;
@@ -115,13 +115,15 @@ architecture twoproc of main is
     PC=>(others=>'X'),
     inst_info=>inst_info_init,
     result=>(others=>'X'),
-    NOP=>false
+    NOP=>true
   );
   type WB_reg_t is record
     PC:word;
+    NOP:boolean;
   end record;
     constant WB_reg_init:WB_reg_t:=(
-    PC=>(others=>'X')
+    PC=>(others=>'X'),
+    NOP=>true
   );
 
   type reg_type is record
@@ -171,6 +173,7 @@ begin
         v.state:=running;
         v.output.PC:=port_in.init_information.init_PC;
       when running=>
+        v.output:=main_out_init;
         --PC
         vnextPC:=r.PC.PC+1;
         v.PC.PC:=vnextPC;
@@ -182,25 +185,49 @@ begin
         --D
         v.D.NOP:=false;
         v.D.PC:=r.F.PC;
-        inst_info:=Decode(port_in.instruction);
+        if r.D.NOP then
+          inst_info:=v.D.inst_info;
+        else
+          inst_info:=Decode(port_in.instruction);
+        end if;
         v.D.inst_info:=inst_info;
+        v.D.operand1:=r.regfile(to_integer(inst_info.rs));
+        v.D.operand2:=r.regfile(to_integer(inst_info.rt));
+
         if inst_info.IO_RE then
           if port_in.IO_empty then
             v.PC:=r.PC;
-            v.output.PC:=v.output.PC;
+            v.output.PC:=r.output.PC;
             v.F:=r.F;
             v.D.NOP:=true;
           else
             v.output.IO_RE:=true;
+            v.D.operand1:=port_in.IO_data;
           end if;
         end if;
-        v.D.operand1:=r.regfile(to_integer(inst_info.rs));
-        v.D.operand2:=r.regfile(to_integer(inst_info.rt));
+        if inst_info.IO_WE then
+          if port_in.IO_full then
+            v.PC:=r.PC;
+            v.output.PC:=r.output.PC;
+            v.F:=r.F;
+            v.D.NOP:=true;
+          else
+            v.output.IO_WE:=true;
+            v.output.IO_data:=v.D.operand1;
+          end if;
+        end if;
         --Ex
+        v.Ex.NOP:=r.D.NOP;
         v.Ex.PC:=r.D.PC;
-        v.ex.inst_info:=r.ex.inst_info;
+        v.ex.inst_info:=r.d.inst_info;
         V.Ex.result:=r.D.operand1;
         --Wb
+        v.Wb.NOP:=r.Ex.NOP;
+        if r.ex.nop then
+          null;
+        else
+          v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
+        end if;
       when hlt=>
     end case;
     --######################## Out and rin######################
