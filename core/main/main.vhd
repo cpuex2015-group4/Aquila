@@ -247,7 +247,6 @@ begin
         if r.d.inst_info.IO_RE then
           v.ex.result:=r.d.IO_input;
         else
---          V.Ex.result:=v.ex.operand1;
           V.ex.result:=alu(v.ex.operand1,v.ex.operand2,v.ex.inst_info.alu);
         end if;
         ---------Wb------------------------------------------
