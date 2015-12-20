@@ -101,7 +101,7 @@ ARCHITECTURE behavior OF aquila_tb IS
    -- appropriate port name 
  
    constant MCLK1_period : time := CLK_LENGTH;
-    constant ROMMAX:Integer:=13;
+    constant ROMMAX:Integer:=9;
     type rom_t is array (0 to ROMMAX) of unsigned(31 downto 0);
     constant rom:rom_t:=(
 	  to_unsigned(0,32),
@@ -109,17 +109,13 @@ ARCHITECTURE behavior OF aquila_tb IS
   	  to_unsigned(1,32),
 	  to_unsigned(1024,32),
           B"0_00000_00001_00000_00000_0000000011_0",
-          to_unsigned(0,32),
-          to_unsigned(0,32),
-          to_unsigned(0,32),
-          to_unsigned(0,32),
           B"0_00000_00000_00001_00000_0000000010_0",
           B"0_00000_00000_00000_00000_0000000000_0",
           x"DEADDEAD",
           x"BEEFBEEF",
           x"C0FFEEEE");
 BEGIN
- 
+
 	-- Instantiate the Unit Under Test (UUT)
    uut: aquila PORT MAP (
           MCLK1 => MCLK1,

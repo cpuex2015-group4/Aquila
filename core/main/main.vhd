@@ -96,6 +96,7 @@ architecture twoproc of main is
     inst_info:inst_info_type;
     operand1:word;
     operand2:word;
+    IO_input:word;
     NOP:boolean;
     HLT:boolean;
   end record;
@@ -104,12 +105,15 @@ architecture twoproc of main is
       inst_info=>inst_info_init,
       operand1=>(others=>'X'),
       operand2=>(others=>'X'),
+      IO_input=>(others=>'X'),
       NOP=>true,
       HLT=>false
   );
     type Exe_reg_t is record
       PC:word;
       inst_info:inst_info_type;
+      operand1:word;
+      operand2:word;
       result:word;
       NOP:boolean;
       HLT:boolean;
@@ -118,6 +122,8 @@ architecture twoproc of main is
     PC=>(others=>'X'),
     inst_info=>inst_info_init,
     result=>(others=>'X'),
+    operand1=>(others=>'X'),
+    operand2=>(others=>'X'),
     NOP=>true,
     HLT=>false
   );
@@ -195,7 +201,6 @@ begin
           inst_info:=Decode(port_in.instruction);
         end if;
         v.d.hlt:=inst_info.hlt or r.d.hlt;
-        
         v.D.inst_info:=inst_info;
         v.D.operand1:=r.regfile(to_integer(inst_info.rs));
         v.D.operand2:=r.regfile(to_integer(inst_info.rt));
@@ -208,17 +213,41 @@ begin
             v.D.NOP:=true;
           else
             v.output.IO_RE:=true;
-            v.D.operand1:=port_in.IO_data;
+            v.D.IO_input:=port_in.IO_data;
           end if;
         end if;
 
-        --Ex
+        -----------Ex------------------------------------------
+        --Forwading
+        if  r.d.inst_info.rs=0 then
+          v.ex.operand1:=to_unsigned(0,word_size);
+        elsif r.d.inst_info.rs=r.ex.inst_info.rd then
+          v.ex.operand1:=r.ex.result;
+        else
+          v.ex.operand1:=r.d.operand1;
+        end if;
+
+        if  r.d.inst_info.rt=0 then
+          v.ex.operand2:=to_unsigned(0,word_size);
+        elsif r.d.inst_info.rt=r.ex.inst_info.rd then
+          v.ex.operand2:=r.ex.result;
+        else
+          v.ex.operand2:=r.d.operand2;
+        end if;
+
+        --main
         v.ex.hlt:=r.d.hlt;
         v.Ex.NOP:=r.D.NOP;
         v.Ex.PC:=r.D.PC;
         v.ex.inst_info:=r.d.inst_info;
-        V.Ex.result:=r.D.operand1;
-        --Wb
+
+        --main
+        if r.d.inst_info.IO_RE then
+          v.ex.result:=r.d.IO_input;
+        else
+          V.Ex.result:=v.ex.operand1;
+        end if;
+        ---------Wb------------------------------------------
         if r.ex.hlt then
           v.state:=hlt;
         end if;
@@ -242,6 +271,8 @@ begin
         end if;
       when hlt=>
     end case;
+
+    v.regfile(0):=to_unsigned(0,word_size);
     --######################## Out and rin######################
     rin<=v;
     port_out<=r.output;
