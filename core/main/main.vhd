@@ -79,12 +79,6 @@ architecture twoproc of main is
   type reg_file_t is array(0 to 31) of word;
   constant reg_file_init:reg_file_t:=(others=>(others=>'X'));
 
-  type PC_reg_t is record
-    PC:word;
-  end record;
-  constant PC_reg_init:PC_reg_t:=(
-    PC=>(others=>'X')
-  );
 
   type Fetch_reg_t is record
     PC:word;
@@ -143,7 +137,6 @@ architecture twoproc of main is
     output:main_out_type;
     regfile:reg_file_t;
     fregfile:reg_file_t;
-    PC:PC_reg_t;
     F:Fetch_reg_t;
     D:Decode_reg_t;
     EX:Exe_reg_t;
@@ -154,7 +147,6 @@ architecture twoproc of main is
     output=>main_out_init,
     regfile=>reg_file_init,
     fregfile=>reg_file_init,
-    PC=>PC_reg_init,
     F=>Fetch_reg_init,
     D=>Decode_reg_init,
     EX=>EXe_reg_init,
@@ -181,19 +173,13 @@ begin
         v.fregfile(0):=(others=>'0');
         v.regfile(reg_heap):=port_in.init_information.init_hp;
         v.regfile(reg_stack):=RESIZE(SRAM_ADDR_MAX,32);
-        v.PC.PC:=port_in.init_information.init_PC;
+        v.F.PC:=port_in.init_information.init_PC;
         v.state:=running;
         v.output.PC:=port_in.init_information.init_PC;
       when running=>
         v.output:=main_out_init;
-        --PC
-        vnextPC:=r.PC.PC+1;
-        v.PC.PC:=vnextPC;
-        v.output.PC:=vnextPC;
-
         --F
-        v.F.PC:=r.PC.PC;
-
+        v.F.PC:=r.F.PC+1;
         --D
         v.D.NOP:=false;
         v.D.PC:=r.F.PC;
@@ -213,7 +199,6 @@ begin
         end if;
         if inst_info.IO_RE then
           if port_in.IO_empty then
-            v.PC:=r.PC;
             v.output.PC:=r.output.PC;
             v.F:=r.F;
             v.D.NOP:=true;
@@ -263,7 +248,6 @@ begin
         else
          if r.ex.inst_info.IO_WE then
            if port_in.IO_full then
-             v.PC:=r.PC;
              v.output.PC:=r.output.PC;
              v.F:=r.F;
              v.D.NOP:=true;
@@ -281,6 +265,7 @@ begin
     --######################## Out and rin######################
     rin<=v;
     port_out<=r.output;
+    port_out.PC<=r.F.PC;
   end process;
 
   regs:process(clk,rst)
@@ -292,4 +277,3 @@ begin
     end if;
   end process;
 end twoproc;
-
