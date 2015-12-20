@@ -194,6 +194,8 @@ begin
         else
           inst_info:=Decode(port_in.instruction);
         end if;
+        v.d.hlt:=inst_info.hlt or r.d.hlt;
+        
         v.D.inst_info:=inst_info;
         v.D.operand1:=r.regfile(to_integer(inst_info.rs));
         v.D.operand2:=r.regfile(to_integer(inst_info.rt));
@@ -209,33 +211,34 @@ begin
             v.D.operand1:=port_in.IO_data;
           end if;
         end if;
-        if inst_info.IO_WE then
-          if port_in.IO_full then
-            v.PC:=r.PC;
-            v.output.PC:=r.output.PC;
-            v.F:=r.F;
-            v.D.NOP:=true;
-          else
-            v.output.IO_WE:=true;
-            v.output.IO_data:=v.D.operand1;
-          end if;
-        end if;
 
-        if inst_info.HLT then
-          v.output:=main_out_init;
-          v.state:=hlt;
-        end if;
         --Ex
+        v.ex.hlt:=r.d.hlt;
         v.Ex.NOP:=r.D.NOP;
         v.Ex.PC:=r.D.PC;
         v.ex.inst_info:=r.d.inst_info;
         V.Ex.result:=r.D.operand1;
         --Wb
+        if r.ex.hlt then
+          v.state:=hlt;
+        end if;
+
         v.Wb.NOP:=r.Ex.NOP;
         if r.ex.nop then
           null;
         else
-          v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
+         if r.ex.inst_info.IO_WE then
+           if port_in.IO_full then
+             v.PC:=r.PC;
+             v.output.PC:=r.output.PC;
+             v.F:=r.F;
+             v.D.NOP:=true;
+           else
+             v.output.IO_WE:=true;
+             v.output.IO_data:=r.Ex.result;
+           end if;
+         end if;
+         v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
         end if;
       when hlt=>
     end case;
