@@ -84,6 +84,7 @@ package ISA is
     format:format_type;
     OPecode:ope_type;
     opt:opt_type;
+    isImmediate:boolean;
     isFPR:boolean;
     MEM_WE:boolean;
     MEM_RE:boolean;
@@ -103,6 +104,7 @@ package ISA is
     format=>RI,
     OPecode=>(others=>'X'),
     opt=>(others=>'X'),
+    isImmediate=>false,
     isFPR=>false,
     MEM_WE=>false,
     MEM_RE=>false,
@@ -138,6 +140,7 @@ package body ISA is
     info.funct:=inst(10 downto 1);
     info.immediate:=inst(15 downto 0);
     opt:=inst(29 downto 28);
+    info.isImmediate:=to_boolean(inst(31));
     info.isFPR:=to_boolean(inst(30));
     if inst(31)='1' then
       info.format:=RI;

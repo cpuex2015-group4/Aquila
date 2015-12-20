@@ -205,8 +205,12 @@ begin
         v.d.hlt:=inst_info.hlt or r.d.hlt;
         v.D.inst_info:=inst_info;
         v.D.operand1:=r.regfile(to_integer(inst_info.rs));
-        v.D.operand2:=r.regfile(to_integer(inst_info.rt));
 
+        if inst_info.isimmediate then
+          v.D.operand2:=unsigned(resize(signed(inst_info.immediate),word_size));
+        else
+          v.D.operand2:=r.regfile(to_integer(inst_info.rt));
+        end if;
         if inst_info.IO_RE then
           if port_in.IO_empty then
             v.PC:=r.PC;
@@ -228,10 +232,9 @@ begin
         else
           v.ex.operand1:=r.d.operand1;
         end if;
-
-        if  r.d.inst_info.rt=0 then
+        if  r.d.inst_info.rt=0 and not r.d.inst_info.isimmediate then
           v.ex.operand2:=to_unsigned(0,word_size);
-        elsif r.d.inst_info.rt=r.ex.inst_info.rd then
+        elsif r.d.inst_info.rt=r.ex.inst_info.rd and not r.d.inst_info.isimmediate then
           v.ex.operand2:=r.ex.result;
         else
           v.ex.operand2:=r.d.operand2;

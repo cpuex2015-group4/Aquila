@@ -28,7 +28,7 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="9"/>
     </file>
     <file xil_pn:name="Mem_controller/Memcon_interface.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="3"/>
     </file>
     <file xil_pn:name="Mem_controller/memcon_tb.vhd" xil_pn:type="FILE_VHDL">
@@ -38,7 +38,7 @@
       <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="5"/>
     </file>
     <file xil_pn:name="IO/IO_inner_interface.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="2"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="2"/>
     </file>
     <file xil_pn:name="IO/IO_interface.vhd" xil_pn:type="FILE_VHDL">
@@ -116,7 +116,7 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="10"/>
     </file>
     <file xil_pn:name="main/ISA.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="2"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="4"/>
     </file>
     <file xil_pn:name="ipcore_dir/INST_MEM.xco" xil_pn:type="FILE_COREGEN">
