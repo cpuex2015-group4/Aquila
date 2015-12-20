@@ -92,6 +92,7 @@ package ISA is
     rd:reg_addr_type;
     rs:reg_addr_type;
     rt:reg_addr_type;
+    reg_we:boolean;
     immediate:immediate_type;
     funct:fct_type;
     ALU:ALU_control_type;
@@ -110,6 +111,7 @@ package ISA is
     rd=>(others=>'0'),
     rs=>(others=>'0'),
     rt=>(others=>'0'),
+    reg_we=>false,
     immediate=>(others=>'X'),
     funct=>(others=>'0'),
     ALU=>ALU_NOP,
