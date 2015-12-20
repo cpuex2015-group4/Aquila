@@ -8,6 +8,7 @@ use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
 use work.ISA.all;
+use work.alu_package.all;
 
 package main_interface is
   type main_in_type is record
@@ -61,6 +62,7 @@ library work;
 use work.global_types.all;
 use work.main_interface.all;
 use work.ISA.all;
+use work.alu_package.all;
 
 entity main is
   port(
@@ -245,7 +247,8 @@ begin
         if r.d.inst_info.IO_RE then
           v.ex.result:=r.d.IO_input;
         else
-          V.Ex.result:=v.ex.operand1;
+--          V.Ex.result:=v.ex.operand1;
+          V.ex.result:=alu(v.ex.operand1,v.ex.operand2,v.ex.inst_info.alu);
         end if;
         ---------Wb------------------------------------------
         if r.ex.hlt then
