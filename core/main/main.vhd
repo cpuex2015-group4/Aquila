@@ -93,6 +93,7 @@ architecture twoproc of main is
     PC:word;
     instruction:word;
     inst_info:inst_info_type;
+    compared:word;
     operand1:word;
     operand2:word;
     IO_input:word;
@@ -103,6 +104,7 @@ architecture twoproc of main is
       PC=>(others=>'X'),
       instruction=>(others=>'X'),
       inst_info=>inst_info_init,
+      compared=>(others=>'X'),
       operand1=>(others=>'X'),
       operand2=>(others=>'X'),
       IO_input=>(others=>'X'),
@@ -113,6 +115,7 @@ architecture twoproc of main is
       PC:word;
       inst_info:inst_info_type;
       instruction:word;
+      compared:word;
       operand1:word;
       operand2:word;
       result:word;
@@ -123,6 +126,7 @@ architecture twoproc of main is
     PC=>(others=>'X'),
     instruction=>(others=>'X'),
     inst_info=>inst_info_init,
+    compared=>(others=>'X'),
     result=>(others=>'X'),
     operand1=>(others=>'X'),
     operand2=>(others=>'X'),
@@ -198,6 +202,8 @@ begin
         end if;
         v.d.hlt:=inst_info.hlt or r.d.hlt;
         v.D.inst_info:=inst_info;
+
+        v.d.compared:=r.regfile(to_integer(inst_info.rd));
         v.D.operand1:=r.regfile(to_integer(inst_info.rs));
 
         if inst_info.isimmediate then
@@ -208,8 +214,31 @@ begin
 
         if inst_info.isJMP then
           v.f.pc:=v.d.operand2;
+        elsif inst_info.format=B then
+          case inst_info.Branch is
+            when B_BEQ=>
+              if v.d.compared=v.d.operand1 then
+                v.f.pc:=resize(inst_info.immediate,word_size);
+              else
+                v.f.pc:=r.f.pc+1;
+              end if;
+            when B_BLT=>
+              if signed(v.d.compared)<signed(v.d.operand1) then
+                v.f.pc:=resize(inst_info.immediate,word_size);
+              else
+                v.f.pc:=r.f.pc+1;
+              end if;
+            when B_BLE=>
+              if signed(v.d.compared)<=signed(v.d.operand1) then
+                v.f.pc:=resize(inst_info.immediate,word_size);
+              else
+                v.f.pc:=r.f.pc+1;
+              end if;
+            when B_NOBRANCH=>
+              v.f.pc:=r.f.pc+1;
+          end case;
         else
-          v.F.PC:=r.F.PC+1;
+          v.f.pc:=r.f.pc+1;
         end if;
         if inst_info.isLNK then
           v.regfile(reg_ra):=r.f.PC+1;

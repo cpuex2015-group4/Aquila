@@ -80,6 +80,7 @@ package ISA is
   type ALU_control_type is
     (alu_nop,alu_itof,alu_ftoi,
      alu_add,alu_fadd,alu_sub,alu_fsub,alu_fmul,alu_fdiv,alu_sll,alu_srl,alu_finv,alu_fsqrt);
+  type B_type is (B_BEQ,B_BLT,B_BLE,B_NOBRANCH);
   type inst_info_type is record
     format:format_type;
     OPecode:ope_type;
@@ -88,6 +89,7 @@ package ISA is
     isFPR:boolean;
     isJMP:boolean;
     isLNK:boolean;
+    Branch:B_type;
     MEM_WE:boolean;
     MEM_RE:boolean;
     IO_WE:boolean;
@@ -110,6 +112,7 @@ package ISA is
     isFPR=>false,
     isJMP=>false,
     isLNK=>false,
+    Branch=>B_NOBRANCH,
     MEM_WE=>false,
     MEM_RE=>false,
     IO_WE=>false,
@@ -159,6 +162,18 @@ package body ISA is
       end case;
     else
       info.format:=RI;
+    end if;
+    if info.format=B then
+      case bit_image is
+        when BEQ=>
+          info.Branch:=B_BEQ;
+        when BLT=>
+          info.branch:=B_BLT;
+        when BLE=>
+          info.branch:=B_BLE;
+        when others=>
+          info.branch:=B_NOBRANCH;
+      end case;
     end if;
     info.Mem_WE:=(info.format=RI) and opt=opt_mem and bit_image=OP_ST;
     info.Mem_RE:=(info.format=RI) and opt=opt_mem and bit_image=OP_LD;
