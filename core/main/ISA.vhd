@@ -86,6 +86,8 @@ package ISA is
     opt:opt_type;
     isImmediate:boolean;
     isFPR:boolean;
+    isJMP:boolean;
+    isLNK:boolean;
     MEM_WE:boolean;
     MEM_RE:boolean;
     IO_WE:boolean;
@@ -106,6 +108,8 @@ package ISA is
     opt=>(others=>'X'),
     isImmediate=>false,
     isFPR=>false,
+    isJMP=>false,
+    isLNK=>false,
     MEM_WE=>false,
     MEM_RE=>false,
     IO_WE=>false,
@@ -203,6 +207,13 @@ package body ISA is
                 info.ALU:=ALU_ADD;
               when OP_SUB =>
                 info.ALU:=ALU_SUB;
+             when OP_JJAL =>
+                info.isJMP:=true;
+                info.isImmediate:=true;
+                info.isLNK:=(opt=jopt_link);
+              when OP_JRJRAL=>
+                info.isJMP:=true;
+                info.islnk:=(opt=jopt_link);					 
               when others=>
                 info.ALU:=ALU_NOP;
             end case;

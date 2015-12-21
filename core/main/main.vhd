@@ -185,7 +185,7 @@ begin
       when running=>
         v.output:=main_out_init;
         --F
-        v.F.PC:=r.F.PC+1;
+--        v.F.PC:=r.F.PC+1;
         --D
         v.D.NOP:=r.f.nop;
         v.D.PC:=r.F.PC;
@@ -204,6 +204,15 @@ begin
           v.D.operand2:=unsigned(resize(signed(inst_info.immediate),word_size));
         else
           v.D.operand2:=r.regfile(to_integer(inst_info.rt));
+        end if;
+
+        if inst_info.isJMP then
+          v.f.pc:=v.d.operand2;
+        else
+          v.F.PC:=r.F.PC+1;
+        end if;
+        if inst_info.isLNK then
+          v.regfile(reg_ra):=r.f.PC+1;
         end if;
         if inst_info.IO_RE then
           if port_in.IO_empty then

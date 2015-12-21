@@ -101,19 +101,20 @@ ARCHITECTURE behavior OF aquila_tb IS
    -- appropriate port name 
  
    constant MCLK1_period : time := CLK_LENGTH;
-    constant ROMMAX:Integer:=10;
+    constant ROMMAX:Integer:=11;
     type rom_t is array (0 to ROMMAX) of unsigned(31 downto 0);
     constant rom:rom_t:=(
 	  to_unsigned(0,32),
-	  to_unsigned(4,32),
+	  to_unsigned(5,32),
   	  to_unsigned(1,32),
 	  to_unsigned(1024,32),
-          B"0_00000_00001_00000_00000_0000000011_0",
-          B"1_00000_00001_00001_0000000000000011",   --add 3
-          B"0_00000_00000_00001_00000_0000000010_0",
+          B"0_00000_00001_00000_00000_0000000011_0", -- in 1
+          B"1_00000_00001_00001_0000000000000001",   --addi 1 1  1
+          B"0_00000_00000_00001_00000_0000000010_0", -- out 1
+          B"0_00010_00000_00000" &to_unsigned(1025,16),
           B"0_00000_00000_00000_00000_0000000000_0",
           x"50000000",
-          x"50EFBEEF",
+          x"00EFBEEF",
           x"C0FFEEEE");
 BEGIN
 
