@@ -82,13 +82,16 @@ architecture twoproc of main is
 
   type Fetch_reg_t is record
     PC:word;
+    NOP:boolean;
   end record;
   constant Fetch_reg_init:Fetch_reg_t:=(
-    PC=>(others=>'X')
+    PC=>(others=>'X'),
+    NOP=>true
   );
 
   type Decode_reg_t is record
     PC:word;
+    instruction:word;
     inst_info:inst_info_type;
     operand1:word;
     operand2:word;
@@ -98,6 +101,7 @@ architecture twoproc of main is
   end record;
     constant Decode_reg_init:Decode_reg_t:=(
       PC=>(others=>'X'),
+      instruction=>(others=>'X'),
       inst_info=>inst_info_init,
       operand1=>(others=>'X'),
       operand2=>(others=>'X'),
@@ -108,6 +112,7 @@ architecture twoproc of main is
     type Exe_reg_t is record
       PC:word;
       inst_info:inst_info_type;
+      instruction:word;
       operand1:word;
       operand2:word;
       result:word;
@@ -116,6 +121,7 @@ architecture twoproc of main is
   end record;
     constant Exe_reg_init:Exe_reg_t:=(
     PC=>(others=>'X'),
+    instruction=>(others=>'X'),
     inst_info=>inst_info_init,
     result=>(others=>'X'),
     operand1=>(others=>'X'),
@@ -173,20 +179,22 @@ begin
         v.fregfile(0):=(others=>'0');
         v.regfile(reg_heap):=port_in.init_information.init_hp;
         v.regfile(reg_stack):=RESIZE(SRAM_ADDR_MAX,32);
-        v.F.PC:=port_in.init_information.init_PC;
+        v.F.PC:=port_in.init_information.init_PC-1;
+        v.F.Nop:=false;
         v.state:=running;
-        v.output.PC:=port_in.init_information.init_PC;
       when running=>
         v.output:=main_out_init;
         --F
         v.F.PC:=r.F.PC+1;
         --D
-        v.D.NOP:=false;
+        v.D.NOP:=r.f.nop;
         v.D.PC:=r.F.PC;
         if r.D.NOP then
           inst_info:=v.D.inst_info;
+          v.d.instruction:=v.d.instruction;
         else
           inst_info:=Decode(port_in.instruction);
+          v.d.instruction:=port_in.instruction;
         end if;
         v.d.hlt:=inst_info.hlt or r.d.hlt;
         v.D.inst_info:=inst_info;
@@ -265,7 +273,7 @@ begin
     --######################## Out and rin######################
     rin<=v;
     port_out<=r.output;
-    port_out.PC<=r.F.PC;
+    port_out.PC<=v.F.PC;
   end process;
 
   regs:process(clk,rst)
