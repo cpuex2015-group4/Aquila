@@ -151,6 +151,8 @@ architecture twoproc of main is
     D:Decode_reg_t;
     EX:Exe_reg_t;
     WB:WB_reg_t;
+    --to debug
+    clk_count:dword;
   end record;
   constant r_init:reg_type :=(
     state=>init,
@@ -160,7 +162,8 @@ architecture twoproc of main is
     F=>Fetch_reg_init,
     D=>Decode_reg_init,
     EX=>EXe_reg_init,
-    WB=>WB_reg_init
+    WB=>WB_reg_init,
+    clk_count=>(others=>'0')
     );
   signal r,rin:reg_type:=r_init;
 begin
@@ -187,6 +190,7 @@ begin
         v.F.Nop:=false;
         v.state:=running;
       when running=>
+        v.clk_count:=r.clk_count+1;
         v.output:=main_out_init;
         --F
 --        v.F.PC:=r.F.PC+1;
