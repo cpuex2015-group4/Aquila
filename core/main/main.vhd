@@ -203,13 +203,26 @@ begin
         v.d.hlt:=inst_info.hlt or r.d.hlt;
         v.D.inst_info:=inst_info;
 
-        v.d.compared:=r.regfile(to_integer(inst_info.rd));
-        v.D.operand1:=r.regfile(to_integer(inst_info.rs));
+
+        if v.d.inst_info.rd/=0 and v.d.inst_info.rd= r.ex.inst_info.rd and r.ex.inst_info.format/=B then
+          v.d.compared:=r.ex.result;
+        else
+          v.d.compared:=r.regfile(to_integer(inst_info.rd));
+        end if;
+        if v.d.inst_info.rs/=0 and v.d.inst_info.rs= r.ex.inst_info.rd and r.ex.inst_info.format/=B  then
+          v.d.operand1:=r.ex.result;
+        else
+          v.D.operand1:=r.regfile(to_integer(inst_info.rs));
+        end if;
 
         if inst_info.isimmediate then
           v.D.operand2:=unsigned(resize(signed(inst_info.immediate),word_size));
         else
-          v.D.operand2:=r.regfile(to_integer(inst_info.rt));
+          if v.d.inst_info.rt/=0 and v.d.inst_info.rt= r.ex.inst_info.rd and r.ex.inst_info.format/=B  then
+            v.D.operand2:=r.ex.result;
+          else
+            v.D.operand2:=r.regfile(to_integer(inst_info.rt));
+          end if;
         end if;
 
         if inst_info.isJMP then
@@ -218,19 +231,19 @@ begin
           case inst_info.Branch is
             when B_BEQ=>
               if v.d.compared=v.d.operand1 then
-                v.f.pc:=resize(inst_info.immediate,word_size);
+                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
               else
                 v.f.pc:=r.f.pc+1;
               end if;
             when B_BLT=>
               if signed(v.d.compared)<signed(v.d.operand1) then
-                v.f.pc:=resize(inst_info.immediate,word_size);
+                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
               else
                 v.f.pc:=r.f.pc+1;
               end if;
             when B_BLE=>
               if signed(v.d.compared)<=signed(v.d.operand1) then
-                v.f.pc:=resize(inst_info.immediate,word_size);
+                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
               else
                 v.f.pc:=r.f.pc+1;
               end if;
@@ -302,7 +315,10 @@ begin
              v.output.IO_data:=r.Ex.result;
            end if;
          end if;
-         v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
+
+         if r.Ex.inst_info.format/=B then
+           v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
+         end if;
         end if;
       when hlt=>
     end case;

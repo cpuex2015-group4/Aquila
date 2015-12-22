@@ -177,8 +177,8 @@ package body ISA is
     end if;
     info.Mem_WE:=(info.format=RI) and opt=opt_mem and bit_image=OP_ST;
     info.Mem_RE:=(info.format=RI) and opt=opt_mem and bit_image=OP_LD;
-    info.IO_WE:=(info.format=X) and info.funct= OP_IN;
-    info.IO_RE:=(info.format=X) and info.funct=OP_OUT;
+    info.IO_WE:=(info.format=X) and info.funct= OP_OUT;
+    info.IO_RE:=(info.format=X) and info.funct=OP_IN;
 
     case info.format is
       when X=>
