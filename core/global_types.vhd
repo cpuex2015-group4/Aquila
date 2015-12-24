@@ -15,15 +15,17 @@ package global_types is
 --  constant IO_section:std_logic_vector(15 downto 0):=x"0091";-- 460800 66MHz
   -- doesn't work
 
-
+  constant ISROM:boolean:=true;
   constant CLK_LENGTH:time:=15ns;
   constant WORD_SIZE:integer:=32;
   constant BYTE_SIZE:integer:=8;
+  constant DOUBLE_WORD_SIZE:integer:=64;
   constant SRAM_ADDR_SIZE:integer:=20;
   constant INST_ADDR_SIZE:integer:=15;
   subtype INST_ADDR_TYPE is unsigned(INST_ADDR_SIZE-1 downto 0);
   subtype byte is unsigned(7 downto 0);
   subtype word is unsigned(31 downto 0);
+  subtype dword is unsigned(DOUBLE_WORD_SIZE-1 downto 0);
   subtype std_byte is std_logic_vector(BYTE_SIZE-1 downto 0);
   subtype std_word is std_logic_vector(WORD_SIZE-1 downto 0);
   subtype SRAM_ADDR_TYPE is unsigned(SRAM_ADDR_SIZE-1 downto 0);

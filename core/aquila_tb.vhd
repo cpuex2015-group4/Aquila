@@ -25,8 +25,8 @@
 -- to guarantee that the testbench will bind correctly to the post-implementation 
 -- simulation model.
 --------------------------------------------------------------------------------
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
@@ -36,34 +36,34 @@ use work.global_types.all;
 -- arithmetic functions with Signed or Unsigned values
 --USE ieee.numeric_std.ALL;
  
-ENTITY aquila_tb IS
-END aquila_tb;
+entity aquila_tb is
+end aquila_tb;
  
-ARCHITECTURE behavior OF aquila_tb IS 
+architecture behavior of aquila_tb is 
  
     -- Component Declaration for the Unit Under Test (UUT)
  
-    COMPONENT aquila
-    PORT(
-         MCLK1 : IN  std_logic;
-         RS_RX : IN  std_logic;
-         RS_TX : OUT  std_logic;
-         ZD : INOUT  std_logic_vector(31 downto 0);
-         ZA : OUT  std_logic_vector(19 downto 0);
-         XWA : OUT  std_logic;
-         XE1 : OUT  std_logic;
-         E2A : OUT  std_logic;
-         XE3 : OUT  std_logic;
-         XGA : OUT  std_logic;
-         XZCKE : OUT  std_logic;
-         ADVA : OUT  std_logic;
-         XLBO : OUT  std_logic;
-         ZZA : OUT  std_logic;
-         XFT : OUT  std_logic;
-         XZBE : OUT  std_logic_vector(3 downto 0);
-         ZCLKMA : OUT  std_logic_vector(1 downto 0)
+    component aquila
+    port(
+         MCLK1 : in  std_logic;
+         RS_RX : in  std_logic;
+         RS_TX : out  std_logic;
+         ZD : inout  std_logic_vector(31 downto 0);
+         ZA : out  std_logic_vector(19 downto 0);
+         XWA : out  std_logic;
+         XE1 : out  std_logic;
+         E2A : out  std_logic;
+         XE3 : out  std_logic;
+         XGA : out  std_logic;
+         XZCKE : out  std_logic;
+         ADVA : out  std_logic;
+         XLBO : out  std_logic;
+         ZZA : out  std_logic;
+         XFT : out  std_logic;
+         XZBE : out  std_logic_vector(3 downto 0);
+         ZCLKMA : out  std_logic_vector(1 downto 0)
         );
-    END COMPONENT;
+    end component;
 
     component mem
       port(
@@ -97,6 +97,9 @@ ARCHITECTURE behavior OF aquila_tb IS
    signal XFT : std_logic;
    signal XZBE : std_logic_vector(3 downto 0);
    signal ZCLKMA : std_logic_vector(1 downto 0);
+--FILEIO
+  type    BIN is file of character;
+  file    FILEPOINT   :   BIN open read_mode is "contest.sld";
 
    constant MCLK1_period : time := CLK_LENGTH;
    -- constant ROMMAX:Integer:=11;
@@ -136,10 +139,10 @@ ARCHITECTURE behavior OF aquila_tb IS
           x"50000000",
           x"00EFBEEF",
           x"C0FFEEEE");
-BEGIN
+begin
 
 	-- Instantiate the Unit Under Test (UUT)
-   uut: aquila PORT MAP (
+   uut: aquila port map (
           MCLK1 => MCLK1,
           RS_RX => RS_RX,
           RS_TX => RS_TX,
@@ -169,32 +172,46 @@ BEGIN
 		MCLK1 <= '1';
 		wait for MCLK1_period/2;
    end process;
- 
+
 
    -- Stimulus process
    stim_proc: process
-   begin		
-      -- hold reset state for 100 ns.
-      wait for 100 ns;	
+    variable FREAD_CHAR:character;
+    variable data:word:=x"00000000";
+   begin
+     -- hold reset state for 100 ns.
+      wait for 100 ns;
 
       wait for MCLK1_period*10;
 
-      
-
-      -- insert stimulus here 
-       for I in 0 to ROMMAX loop
-         for k in 0 to 3 loop
-           rs_rx<='0';
-           wait for IO_section_time;
-           for J in 0 to 7 loop
-             rs_rx<=rom(I)(24-8*k+j);
-             wait for IO_SECTION_TIME;
-           end loop;
-         rs_rx<='1';
-         wait for IO_SECTION_TIME;		 
-       end loop;
-     end loop;
+      -- insert stimulus here
+      if ISROM then
+        for I in 0 to ROMMAX loop
+          for k in 0 to 3 loop
+            rs_rx<='0';
+            wait for IO_section_time;
+            for J in 0 to 7 loop
+              rs_rx<=rom(I)(24-8*k+j);
+              wait for IO_SECTION_TIME;
+            end loop;
+            rs_rx<='1';
+            wait for IO_SECTION_TIME;
+          end loop;
+        end loop;
+      else
+        while(endfile(FILEPOINT)=false) loop
+          read( FILEPOINT, FREAD_CHAR );
+          data:=x"000000" &(conv_std_logic_vector(CHARacter'pos(FREAD_CHAR),8));
+          rs_rx<='0';
+          wait for IO_section_time;
+          for J in 0 to 7 loop
+            rs_rx<=rom(I)(24-8*k+j);
+            wait for IO_SECTION_TIME;
+          end loop;
+          rs_rx<='1';
+          wait for IO_SECTION_TIME;
+        end loop;
+      end if;
       wait;
    end process;
-
-END;
+end;
