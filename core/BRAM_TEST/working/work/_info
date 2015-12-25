@@ -1,0 +1,84 @@
+m255
+K3
+13
+cModel Technology
+Z0 d/home/yukiimai/Sandbox/2015_winter/aquila/BRAM_TEST/working
+T_opt
+V8FzdPl9?KAVo[12e>;QT50
+04 10 8 work TESTRAM_tb behavior 1
+Z1 =1-68f728241c90-56612720-21c8c-1a16
+Z2 o-quiet -auto_acc_if_foreign -work work +acc
+Z3 n@_opt
+Z4 OE;O;10.0c;49
+Z5 d/home/yukiimai/Sandbox/2015_winter/aquila/BRAM_TEST/working
+Etestram
+Z6 w1449204407
+Z7 DPx3 std 6 textio 0 22 G^o2zK;Vh4eVdKTVo98653
+Z8 DPx4 ieee 14 std_logic_1164 0 22 5=aWaoGZSMWIcH0i^f`XF1
+R5
+Z9 8../ipcore_dir/TESTRAM.vhd
+Z10 F../ipcore_dir/TESTRAM.vhd
+l0
+L43
+Z11 Vk<Bo?>SONLQDmMY[8ORXD3
+Z12 OE;C;10.0c;49
+31
+Z13 !s108 1449207584.060215
+Z14 !s90 -reportprogress|300|-explicit|-93|../ipcore_dir/TESTRAM.vhd|
+Z15 !s107 ../ipcore_dir/TESTRAM.vhd|
+Z16 o-explicit -93
+Z17 tExplicit 1
+Z18 !s100 DYJ5?ZJS2_z^m9J@]6Kam2
+Atestram_a
+Z19 DPx4 ieee 18 std_logic_unsigned 0 22 RYmj;=TK`k=k>D@Cz`zoB3
+Z20 DPx4 ieee 15 std_logic_arith 0 22 4`Y?g_lkdn;7UL9IiJck01
+Z21 DEx13 xilinxcorelib 16 blk_mem_gen_v7_3 0 22 >gFlEYB9fNd5eI[QYmHAV2
+R7
+R8
+Z22 DEx4 work 7 testram 0 22 k<Bo?>SONLQDmMY[8ORXD3
+l133
+L54
+Z23 V_n@L8m;2jjagB11j8E3^P3
+R12
+31
+R13
+R14
+R15
+R16
+R17
+Z24 !s100 8W>ljmWHF4L3FHf6fBb@40
+Etestram_tb
+Z25 w1449207557
+R20
+R7
+R8
+R5
+Z26 8../TESTRAM_tb.vhd
+Z27 F../TESTRAM_tb.vhd
+l0
+L35
+Z28 Ve^^HIMlh26z79:ef9H5fl2
+R12
+31
+Z29 !s108 1449207584.101741
+Z30 !s90 -reportprogress|300|-explicit|-93|../TESTRAM_tb.vhd|
+Z31 !s107 ../TESTRAM_tb.vhd|
+R16
+R17
+Z32 !s100 [d352_YK;gX_z33F=aX?E1
+Abehavior
+R20
+R7
+R8
+Z33 DEx4 work 10 testram_tb 0 22 e^^HIMlh26z79:ef9H5fl2
+l67
+L38
+Z34 VWkBih_06aZe0hOMUHBUUk3
+R12
+31
+R29
+R30
+R31
+R16
+R17
+Z35 !s100 ;1PC3<laRkV?`@=38jh3d0

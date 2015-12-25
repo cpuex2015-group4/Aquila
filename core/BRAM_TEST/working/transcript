@@ -1,0 +1,248 @@
+# //  ModelSim SE 10.0c Jul 21 2011 Linux 3.13.0-71-generic
+# //
+# //  Copyright 1991-2011 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  THIS WORK CONTAINS TRADE SECRET AND PROPRIETARY INFORMATION
+# //  WHICH IS THE PROPERTY OF MENTOR GRAPHICS CORPORATION OR ITS
+# //  LICENSORS AND IS SUBJECT TO LICENSE TERMS.
+# //
+# do {TESTRAM_tb.fdo} 
+# ** Warning: (vlib-34) Library already exists at "work".
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity TESTRAM
+# -- Compiling architecture TESTRAM_a of TESTRAM
+# -- Loading package std_logic_arith
+# -- Loading package STD_LOGIC_UNSIGNED
+# -- Loading entity BLK_MEM_GEN_V7_3
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package std_logic_arith
+# -- Compiling entity TESTRAM_tb
+# -- Compiling architecture behavior of TESTRAM_tb
+# ** Warning: [14] ../TESTRAM_tb.vhd(100): (vcom-1272) Length of expected is 32; length of actual is 15.
+# vsim -lib work -voptargs=\"+acc\" -t 1ps work.TESTRAM_tb 
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.std_logic_arith(body)
+# Loading work.testram_tb(behavior)#1
+# Loading ieee.std_logic_unsigned(body)
+# Loading work.testram(testram_a)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3(behavioral)#1
+# Loading ieee.std_logic_textio(body)
+# Loading xilinxcorelib.blk_mem_gen_v7_3_mem_module(mem_module_behavioral)#1
+# ** Note:  Block Memory Generator data initialization complete.
+#    Time: 0 ps  Iteration: 0  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#2
+# Loading xilinxcorelib.blk_mem_gen_v7_3_softecc_output_reg_stage(softecc_output_reg_stage_behavioral)#1
+# .main_pane.wave.interior.cs.body.pw.wf
+# .main_pane.structure.interior.cs.body.struct
+# .main_pane.objects.interior.cs.body.tree
+# ** Fatal: (vsim-3420) Array lengths do not match. Left is 32 (31 downto 0). Right is 15 (0 to 14).
+#    Time: 200 ns  Iteration: 0  Process: /testram_tb/stim_proc File: ../TESTRAM_tb.vhd
+# Fatal error in ForLoop loop at ../TESTRAM_tb.vhd line 100
+# 
+# HDL call sequence:
+# Stopped at ../TESTRAM_tb.vhd 100 ForLoop loop
+# 
+#  
+quit -sim
+do {TESTRAM_tb.fdo}
+# ** Warning: (vlib-34) Library already exists at "work".
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity TESTRAM
+# -- Compiling architecture TESTRAM_a of TESTRAM
+# -- Loading package std_logic_arith
+# -- Loading package STD_LOGIC_UNSIGNED
+# -- Loading entity BLK_MEM_GEN_V7_3
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package std_logic_arith
+# -- Compiling entity TESTRAM_tb
+# -- Compiling architecture behavior of TESTRAM_tb
+# vsim -lib work -voptargs=\"+acc\" -t 1ps work.TESTRAM_tb 
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.std_logic_arith(body)
+# Loading work.testram_tb(behavior)#1
+# Loading ieee.std_logic_unsigned(body)
+# Loading work.testram(testram_a)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3(behavioral)#1
+# Loading ieee.std_logic_textio(body)
+# Loading xilinxcorelib.blk_mem_gen_v7_3_mem_module(mem_module_behavioral)#1
+# ** Note:  Block Memory Generator data initialization complete.
+#    Time: 0 ps  Iteration: 0  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#2
+# Loading xilinxcorelib.blk_mem_gen_v7_3_softecc_output_reg_stage(softecc_output_reg_stage_behavioral)#1
+# .main_pane.wave.interior.cs.body.pw.wf
+# .main_pane.structure.interior.cs.body.struct
+# .main_pane.objects.interior.cs.body.tree
+# ** Note: Block Memory Generator CORE Generator module is using a behavioral model FOR simulation which will not precisely model memory collision behavior.
+#    Time: 205 ns  Iteration: 1  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+run
+quit -sim
+do {TESTRAM_tb.fdo}
+# ** Warning: (vlib-34) Library already exists at "work".
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity TESTRAM
+# -- Compiling architecture TESTRAM_a of TESTRAM
+# -- Loading package std_logic_arith
+# -- Loading package STD_LOGIC_UNSIGNED
+# -- Loading entity BLK_MEM_GEN_V7_3
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package std_logic_arith
+# -- Compiling entity TESTRAM_tb
+# -- Compiling architecture behavior of TESTRAM_tb
+# vsim -lib work -voptargs=\"+acc\" -t 1ps work.TESTRAM_tb 
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.std_logic_arith(body)
+# Loading work.testram_tb(behavior)#1
+# Loading ieee.std_logic_unsigned(body)
+# Loading work.testram(testram_a)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3(behavioral)#1
+# Loading ieee.std_logic_textio(body)
+# Loading xilinxcorelib.blk_mem_gen_v7_3_mem_module(mem_module_behavioral)#1
+# ** Note:  Block Memory Generator data initialization complete.
+#    Time: 0 ps  Iteration: 0  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#2
+# Loading xilinxcorelib.blk_mem_gen_v7_3_softecc_output_reg_stage(softecc_output_reg_stage_behavioral)#1
+# .main_pane.wave.interior.cs.body.pw.wf
+# .main_pane.structure.interior.cs.body.struct
+# .main_pane.objects.interior.cs.body.tree
+# ** Note: Block Memory Generator CORE Generator module is using a behavioral model FOR simulation which will not precisely model memory collision behavior.
+#    Time: 205 ns  Iteration: 1  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+run
+quit -sim
+do {TESTRAM_tb.fdo}
+# ** Warning: (vlib-34) Library already exists at "work".
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity TESTRAM
+# -- Compiling architecture TESTRAM_a of TESTRAM
+# -- Loading package std_logic_arith
+# -- Loading package STD_LOGIC_UNSIGNED
+# -- Loading entity BLK_MEM_GEN_V7_3
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package std_logic_arith
+# -- Compiling entity TESTRAM_tb
+# -- Compiling architecture behavior of TESTRAM_tb
+# ** Error: ../TESTRAM_tb.vhd(105): Enumeration literal '0' is not of type ieee.std_logic_1164.STD_LOGIC_VECTOR.
+# ** Error: ../TESTRAM_tb.vhd(114): VHDL Compiler exiting
+# ** Error: /home/yukiimai/modelsim/modeltech/linux/vcom failed.
+# Error in macro ./TESTRAM_tb.fdo line 24
+# /home/yukiimai/modelsim/modeltech/linux/vcom failed.
+#     while executing
+# "vcom -explicit  -93 "../TESTRAM_tb.vhd""
+do {TESTRAM_tb.fdo}
+# ** Warning: (vlib-34) Library already exists at "work".
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity TESTRAM
+# -- Compiling architecture TESTRAM_a of TESTRAM
+# -- Loading package std_logic_arith
+# -- Loading package STD_LOGIC_UNSIGNED
+# -- Loading entity BLK_MEM_GEN_V7_3
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package std_logic_arith
+# -- Compiling entity TESTRAM_tb
+# -- Compiling architecture behavior of TESTRAM_tb
+# vsim -lib work -voptargs=\"+acc\" -t 1ps work.TESTRAM_tb 
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.std_logic_arith(body)
+# Loading work.testram_tb(behavior)#1
+# Loading ieee.std_logic_unsigned(body)
+# Loading work.testram(testram_a)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3(behavioral)#1
+# Loading ieee.std_logic_textio(body)
+# Loading xilinxcorelib.blk_mem_gen_v7_3_mem_module(mem_module_behavioral)#1
+# ** Note:  Block Memory Generator data initialization complete.
+#    Time: 0 ps  Iteration: 0  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#2
+# Loading xilinxcorelib.blk_mem_gen_v7_3_softecc_output_reg_stage(softecc_output_reg_stage_behavioral)#1
+# .main_pane.wave.interior.cs.body.pw.wf
+# .main_pane.structure.interior.cs.body.struct
+# .main_pane.objects.interior.cs.body.tree
+# ** Note: Block Memory Generator CORE Generator module is using a behavioral model FOR simulation which will not precisely model memory collision behavior.
+#    Time: 205 ns  Iteration: 1  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+quit -sim
+quit -sim
+do {TESTRAM_tb.fdo}
+# ** Warning: (vlib-34) Library already exists at "work".
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity TESTRAM
+# -- Compiling architecture TESTRAM_a of TESTRAM
+# -- Loading package std_logic_arith
+# -- Loading package STD_LOGIC_UNSIGNED
+# -- Loading entity BLK_MEM_GEN_V7_3
+# Model Technology ModelSim SE vcom 10.0c Compiler 2011.07 Jul 21 2011
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package std_logic_arith
+# -- Compiling entity TESTRAM_tb
+# -- Compiling architecture behavior of TESTRAM_tb
+# vsim -lib work -voptargs=\"+acc\" -t 1ps work.TESTRAM_tb 
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.std_logic_arith(body)
+# Loading work.testram_tb(behavior)#1
+# Loading ieee.std_logic_unsigned(body)
+# Loading work.testram(testram_a)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3(behavioral)#1
+# Loading ieee.std_logic_textio(body)
+# Loading xilinxcorelib.blk_mem_gen_v7_3_mem_module(mem_module_behavioral)#1
+# ** Note:  Block Memory Generator data initialization complete.
+#    Time: 0 ps  Iteration: 0  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#1
+# Loading xilinxcorelib.blk_mem_gen_v7_3_output_stage(output_stage_behavioral)#2
+# Loading xilinxcorelib.blk_mem_gen_v7_3_softecc_output_reg_stage(softecc_output_reg_stage_behavioral)#1
+# .main_pane.wave.interior.cs.body.pw.wf
+# .main_pane.structure.interior.cs.body.struct
+# .main_pane.objects.interior.cs.body.tree
+# ** Note: Block Memory Generator CORE Generator module is using a behavioral model FOR simulation which will not precisely model memory collision behavior.
+#    Time: 205 ns  Iteration: 1  Instance: /testram_tb/uut/U0/native_mem_module/mem_module
+run
