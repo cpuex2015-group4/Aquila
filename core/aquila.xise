@@ -80,9 +80,6 @@
     <file xil_pn:name="IO/ipcore_dir/IO_FIFO.ngc" xil_pn:type="FILE_NGC">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="aquila.ucf" xil_pn:type="FILE_UCF">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
     <file xil_pn:name="Mem_controller/Mem_top.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
@@ -126,6 +123,9 @@
     <file xil_pn:name="main/alu.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="5"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="5"/>
+    </file>
+    <file xil_pn:name="aquila.ucf" xil_pn:type="FILE_UCF">
+      <association xil_pn:name="Implementation" xil_pn:seqID="204"/>
     </file>
     <file xil_pn:name="ipcore_dir/INST_MEM.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
@@ -493,7 +493,7 @@
   </properties>
 
   <bindings>
-    <binding xil_pn:location="/Mem_top" xil_pn:name="aquila.ucf"/>
+    <binding xil_pn:location="/aquila" xil_pn:name="aquila.ucf"/>
   </bindings>
 
   <libraries/>

@@ -15,7 +15,7 @@ package global_types is
 --  constant IO_section:std_logic_vector(15 downto 0):=x"0091";-- 460800 66MHz
   -- doesn't work
 
-  constant ISROM:boolean:=true;
+  constant ISROM:boolean:=false;
   constant CLK_LENGTH:time:=15ns;
   constant WORD_SIZE:integer:=32;
   constant BYTE_SIZE:integer:=8;

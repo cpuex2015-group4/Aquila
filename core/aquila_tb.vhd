@@ -99,7 +99,7 @@ architecture behavior of aquila_tb is
    signal ZCLKMA : std_logic_vector(1 downto 0);
 --FILEIO
   type    BIN is file of character;
-  file    FILEPOINT   :   BIN open read_mode is "contest.sld";
+  file    FILEPOINT   :   BIN open read_mode is "test.run";
 
    constant MCLK1_period : time := CLK_LENGTH;
    -- constant ROMMAX:Integer:=11;
@@ -177,7 +177,7 @@ begin
    -- Stimulus process
    stim_proc: process
     variable FREAD_CHAR:character;
-    variable data:word:=x"00000000";
+    variable data:byte:=x"00";
    begin
      -- hold reset state for 100 ns.
       wait for 100 ns;
@@ -201,11 +201,11 @@ begin
       else
         while(endfile(FILEPOINT)=false) loop
           read( FILEPOINT, FREAD_CHAR );
-          data:=x"000000" &(conv_std_logic_vector(CHARacter'pos(FREAD_CHAR),8));
+          data:= (to_unsigned(CHARacter'pos(FREAD_CHAR),8));
           rs_rx<='0';
           wait for IO_section_time;
           for J in 0 to 7 loop
-            rs_rx<=rom(I)(24-8*k+j);
+            rs_rx<=data(j);
             wait for IO_SECTION_TIME;
           end loop;
           rs_rx<='1';
