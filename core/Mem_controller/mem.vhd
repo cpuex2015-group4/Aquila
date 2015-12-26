@@ -4,8 +4,10 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.std_logic_arith.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.global_types.all;
 
 entity mem is
   port(
@@ -19,7 +21,7 @@ end mem;
 architecture behavior of mem is
   --types and constants
   subtype mem_data_t is std_logic_vector(31 downto 0);
-  type memt is array(0 to 128) of mem_data_t;
+  type memt is array(0 to to_integer(SRAM_ADDR_MAX)) of mem_data_t;
   signal test_mem:memt:=(others=>x"FFFFFFFF");
   type snapshot is record
     XWA:std_logic;
@@ -40,12 +42,12 @@ begin
       snaps(0).addr<=za;
       snaps(1)<=snaps(0);
       if snaps(0).xwa='1' then -- read from the mem mode
-        zd<=test_mem(conv_integer(snaps(0).addr));
+        zd<=test_mem(to_integer(unsigned(snaps(0).addr)));
       else
         zd<=(others=>'Z');
       end if;
       if snaps(1).xwa='0' then
-        test_mem(conv_integer(snaps(1).addr))<=zd;
+        test_mem(to_integer(unsigned(snaps(1).addr)))<=zd;
       end if;
     end if;
   end process;
