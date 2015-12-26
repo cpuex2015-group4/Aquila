@@ -9,6 +9,7 @@ library work;
 use work.global_types.all;
 use work.ISA.all;
 use work.alu_package.all;
+use work.fpu_interface.all;
 
 package main_interface is
   type main_in_type is record
@@ -63,6 +64,7 @@ use work.global_types.all;
 use work.main_interface.all;
 use work.ISA.all;
 use work.alu_package.all;
+use work.fpu_interface.all;
 
 entity main is
   port(
@@ -73,6 +75,15 @@ entity main is
 end main;
 
 architecture twoproc of main is
+  --component
+  component fpu
+  port(
+    clk,rst:in  std_logic;
+    port_in       :in  fpu_in_type;
+    port_out      :out fpu_out_type
+  );
+  end component;
+
   --types and constants
   type state_type is (init,ready,running,hlt);
 
@@ -166,8 +177,11 @@ architecture twoproc of main is
     clk_count=>(others=>'0')
     );
   signal r,rin:reg_type:=r_init;
+  signal fpu_input:fpu_in_type:=fpu_in_init;
+  signal fpu_output:fpu_out_type:=fpu_out_init;
 begin
-  comb:process(r,port_in)
+  FPU_UNIT:fpu port map(clk,rst,fpu_input,fpu_output);
+  comb:process(r,port_in,fpu_output)
     variable v:reg_type;
     variable vnextPC:word;
     variable inst_info:inst_info_type;

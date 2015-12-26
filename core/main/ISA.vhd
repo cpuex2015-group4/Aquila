@@ -80,6 +80,7 @@ package ISA is
   type ALU_control_type is
     (alu_nop,alu_itof,alu_ftoi,
      alu_add,alu_fadd,alu_sub,alu_fsub,alu_fmul,alu_fdiv,alu_sll,alu_srl,alu_finv,alu_fsqrt);
+  type data_src_type is (from_alu,from_fpu,from_MEM);
   type B_type is (B_BEQ,B_BLT,B_BLE,B_NOBRANCH);
   type inst_info_type is record
     format:format_type;
@@ -98,6 +99,7 @@ package ISA is
     rs:reg_addr_type;
     rt:reg_addr_type;
     reg_we:boolean;
+    data_src:data_src_type;
     immediate:immediate_type;
     funct:fct_type;
     ALU:ALU_control_type;
@@ -121,6 +123,7 @@ package ISA is
     rs=>(others=>'0'),
     rt=>(others=>'0'),
     reg_we=>false,
+    data_src=>from_alu,
     immediate=>(others=>'X'),
     funct=>(others=>'0'),
     ALU=>ALU_NOP,
@@ -177,6 +180,9 @@ package body ISA is
     end if;
     info.Mem_WE:=(info.format=RI) and opt=opt_mem and bit_image=OP_ST;
     info.Mem_RE:=(info.format=RI) and opt=opt_mem and bit_image=OP_LD;
+    if info.Mem_RE then
+      info.data_src:=from_Mem;
+    end if;
     info.IO_WE:=(info.format=X) and info.funct= OP_OUT;
     info.IO_RE:=(info.format=X) and info.funct=OP_IN;
 
@@ -185,8 +191,10 @@ package body ISA is
         case info.funct is
           when OP_ITOF=>
             info.ALU:=ALU_itof;
+            info.data_src:=from_fpu;
           when OP_FTOI=>
             info.ALU:=ALU_ftoi;
+            info.data_src:=from_fpu;
           when others=>
             info.ALU:=ALU_NOP;
         end case;
@@ -204,6 +212,7 @@ package body ISA is
           end case;
         else
           if info.isFPR then
+            info.data_src:=from_fpu;
             case bit_image is
               when OP_ADD =>
                 info.ALU:=ALU_FADD;
