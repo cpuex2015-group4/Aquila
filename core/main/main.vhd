@@ -208,12 +208,14 @@ begin
         v.D.inst_info:=inst_info;
 
 
-        if v.d.inst_info.rd/=0 and v.d.inst_info.rd= r.ex.inst_info.rd and r.ex.inst_info.format/=B then
+        if v.d.inst_info.rd/=0 and v.d.inst_info.rd= r.ex.inst_info.rd and r.ex.inst_info.format/=B
+          and v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
           v.d.compared:=r.ex.result;
         else
           v.d.compared:=r.regfile(to_integer(inst_info.rd));
         end if;
-        if v.d.inst_info.rs/=0 and v.d.inst_info.rs= r.ex.inst_info.rd and r.ex.inst_info.format/=B  then
+        if v.d.inst_info.rs/=0 and v.d.inst_info.rs= r.ex.inst_info.rd and r.ex.inst_info.format/=B
+          and v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
           v.d.operand1:=r.ex.result;
         else
           v.D.operand1:=r.regfile(to_integer(inst_info.rs));
@@ -222,7 +224,8 @@ begin
         if inst_info.isimmediate then
           v.D.operand2:=unsigned(resize(signed(inst_info.immediate),word_size));
         else
-          if v.d.inst_info.rt/=0 and v.d.inst_info.rt= r.ex.inst_info.rd and r.ex.inst_info.format/=B  then
+          if v.d.inst_info.rt/=0 and v.d.inst_info.rt= r.ex.inst_info.rd and r.ex.inst_info.format/=B and
+            v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
             v.D.operand2:=r.ex.result;
           else
             v.D.operand2:=r.regfile(to_integer(inst_info.rt));
@@ -328,6 +331,7 @@ begin
     end case;
 
     v.regfile(0):=to_unsigned(0,word_size);
+    v.fregfile(0):=to_unsigned(0,word_size);
     --######################## Out and rin######################
     rin<=v;
     port_out<=r.output;
