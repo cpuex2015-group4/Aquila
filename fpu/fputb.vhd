@@ -44,6 +44,7 @@ architecture testbench of top is
   end component;
   
   component fadd port (
+    clk    : in  std_logic;
     ina    : in  std_logic_vector (31 downto 0);
     inb    : in  std_logic_vector (31 downto 0);
     output : out std_logic_vector (31 downto 0));
@@ -92,6 +93,7 @@ begin
     output => cmpoutput);
     
   add_u : fadd port map (
+    clk    => clk,
     ina    => inputA,
     inb    => inputB,
     output => addoutput);
