@@ -11,17 +11,16 @@ use work.global_types.all;
 package loader_interface is
   type loader_in_type is record
    activate:boolean;
-   IO_empty:boolean;
+   ready:boolean;
    IO_data:word;
   end record;
   constant loader_in_init:loader_in_type:=(
     activate=>false,
-    IO_empty=>true,
+    ready=>true,
     IO_data=>(others=>'0')
     );
   type loader_out_type is record
     data:word;
-    IO_RE:boolean;
     mem_we:boolean;
     mem_addr:SRAM_ADDR_TYPE;
     inst_mem_we:boolean;
@@ -31,7 +30,6 @@ package loader_interface is
   end record;
   constant loader_out_init:loader_out_type:=(
     data=>(others=>'0'),
-    IO_RE=>false,
     mem_we=>false,
     inst_mem_we=>false,
     mem_addr=>(others=>'1'),
@@ -67,6 +65,7 @@ architecture twoproc of loader is
     data_size:word;
     entry_point:word;
     state:state_type;
+    port_out:loader_out_type;
   end record;
   constant r_init:reg_type :=(
     count=>(others=>'0'),
@@ -74,7 +73,8 @@ architecture twoproc of loader is
     text_size=>(others=>'X'),
     data_size=>(others=>'X'),
     entry_point=>(others=>'X'),
-    state=>init
+    state=>init,
+    port_out=>loader_out_init
     );
   signal r,rin:reg_type:=r_init;
 begin
@@ -89,8 +89,7 @@ begin
           v.state:=header;
         end if;
       when header=>
-        if not loader_in.IO_empty then
-          loader_out.IO_RE<=true;
+        if loader_in.ready then
           case r.count is
             when "00"=>
               v.count:=r.count+1;
@@ -108,48 +107,43 @@ begin
               null;
           end case;
         else
-          loader_out.IO_RE<=false;
         end if;
       when text_recv=>
-        if not loader_in.IO_empty then
-          loader_out.IO_RE<=true;
-          loader_out.inst_mem_we<=true;
-          loader_out.data<=loader_in.IO_data;
-          loader_out.inst_addr<=r.PC(INST_ADDR_SIZE-1 downto 0);
+        if loader_in.ready then
+          v.port_out.inst_mem_we:=true;
+          v.port_out.data:=loader_in.IO_data;
+          v.port_out.inst_addr:=r.PC(INST_ADDR_SIZE-1 downto 0);
           v.PC:=r.PC+1;
           if r.PC=USER_SECTION_OFFSET+r.text_size-1 then
             v.state:=data_recv;
           end if;
         else
-          loader_out.IO_RE<=false;
-          loader_out.inst_mem_we<=false;
+          v.port_out.inst_mem_we:=false;
         end if;
       when data_recv=>
-        loader_out.inst_mem_we<=false;
-        if not loader_in.IO_empty then
-          loader_out.IO_RE<=true;
-          loader_out.mem_we<=true;
-          loader_out.data<=loader_in.IO_data;
-          loader_out.mem_addr<=r.PC(SRAM_ADDR_SIZE-1 downto 0);
+        v.port_out.inst_mem_we:=false;
+        if loader_in.ready then
+          v.port_out.mem_we:=true;
+          v.port_out.data:=loader_in.IO_data;
+          v.port_out.mem_addr:=r.PC(SRAM_ADDR_SIZE-1 downto 0);
           v.PC:=r.PC+1;
           if r.PC=USER_SECTION_OFFSET+r.text_size+r.data_size-1 then
             v.state:=hlt;
           end if;
         else
-          loader_out.IO_RE<=false;
-          loader_out.mem_we<=false;
+          v.port_out.mem_we:=false;
         end if;
       when hlt=>
-        loader_out.IO_RE<=false;
-        loader_out.mem_we<=false;
-        loader_out.inst_mem_we<=false;
-        loader_out.loaded<=true;
-    end case;
-    rin<=v;
-     loader_out.init_information<=(
+        v.port_out.mem_we:=false;
+        v.port_out.inst_mem_we:=false;
+        v.port_out.loaded:=true;
+        v.port_out.init_information:=(
         init_PC=>r.entry_point,
         init_hp=>USER_SECTION_OFFSET+r.text_size+r.data_size
       );
+    end case;
+    rin<=v;
+    loader_out<=r.port_out;
   end process;
 
   regs:process(clk,rst)

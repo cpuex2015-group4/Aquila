@@ -25,8 +25,8 @@
 -- to guarantee that the testbench will bind correctly to the post-implementation 
 -- simulation model.
 --------------------------------------------------------------------------------
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
@@ -36,35 +36,44 @@ use work.global_types.all;
 -- arithmetic functions with Signed or Unsigned values
 --USE ieee.numeric_std.ALL;
  
-ENTITY aquila_tb IS
-END aquila_tb;
+entity aquila_tb is
+end aquila_tb;
  
-ARCHITECTURE behavior OF aquila_tb IS 
+architecture behavior of aquila_tb is 
  
     -- Component Declaration for the Unit Under Test (UUT)
  
-    COMPONENT aquila
-    PORT(
-         MCLK1 : IN  std_logic;
-         RS_RX : IN  std_logic;
-         RS_TX : OUT  std_logic;
-         ZD : INOUT  std_logic_vector(31 downto 0);
-         ZA : OUT  std_logic_vector(19 downto 0);
-         XWA : OUT  std_logic;
-         XE1 : OUT  std_logic;
-         E2A : OUT  std_logic;
-         XE3 : OUT  std_logic;
-         XGA : OUT  std_logic;
-         XZCKE : OUT  std_logic;
-         ADVA : OUT  std_logic;
-         XLBO : OUT  std_logic;
-         ZZA : OUT  std_logic;
-         XFT : OUT  std_logic;
-         XZBE : OUT  std_logic_vector(3 downto 0);
-         ZCLKMA : OUT  std_logic_vector(1 downto 0)
+    component aquila
+    port(
+         MCLK1 : in  std_logic;
+         RS_RX : in  std_logic;
+         RS_TX : out  std_logic;
+         ZD : inout  std_logic_vector(31 downto 0);
+         ZA : out  std_logic_vector(19 downto 0);
+         XWA : out  std_logic;
+         XE1 : out  std_logic;
+         E2A : out  std_logic;
+         XE3 : out  std_logic;
+         XGA : out  std_logic;
+         XZCKE : out  std_logic;
+         ADVA : out  std_logic;
+         XLBO : out  std_logic;
+         ZZA : out  std_logic;
+         XFT : out  std_logic;
+         XZBE : out  std_logic_vector(3 downto 0);
+         ZCLKMA : out  std_logic_vector(1 downto 0)
         );
-    END COMPONENT;
-    
+    end component;
+
+    component mem
+      port(
+        ZD    : inout std_logic_vector(31 downto 0):=(others=>'Z');
+        ZA    : in   std_logic_vector(19 downto 0);
+        XWA   : in   std_logic;
+        clk   : in   std_logic
+        );
+    end component;
+
 
    --Inputs
    signal MCLK1 : std_logic := '0';
@@ -88,22 +97,52 @@ ARCHITECTURE behavior OF aquila_tb IS
    signal XFT : std_logic;
    signal XZBE : std_logic_vector(3 downto 0);
    signal ZCLKMA : std_logic_vector(1 downto 0);
-   -- No clocks detected in port list. Replace MCLK1 below with 
-   -- appropriate port name 
- 
+--FILEIO
+  type    BIN is file of character;
+  file    FILEPOINT   :   BIN open read_mode is "test.run";
+
    constant MCLK1_period : time := CLK_LENGTH;
-    constant ROMMAX:Integer:=10;
+   -- constant ROMMAX:Integer:=11;
+   -- type rom_t is array (0 to ROMMAX) of unsigned(31 downto 0);
+   -- constant rom:rom_t:=(
+   --       to_unsigned(0,32),
+   --       to_unsigned(5,32),
+   --       to_unsigned(1,32),
+   --       to_unsigned(1024,32),
+   --       B"0_00000_00001_00000_00000_0000000011_0", -- in 1
+   --       B"1_00000_00001_00001_0000000000000001",   --addi 1 1  1
+   --       B"0_00000_00000_00001_00000_0000000010_0", -- out 1
+   --       B"0_00010_00000_00000" &to_unsigned(1025,16),
+   --       B"0_00000_00000_00000_00000_0000000000_0",
+   --       x"50000000",
+   --       x"00EFBEEF",
+   --       x"C0FFEEEE");
+
+    constant ROMMAX:Integer:=17;  --loop fib
     type rom_t is array (0 to ROMMAX) of unsigned(31 downto 0);
     constant rom:rom_t:=(
-	  to_unsigned(0,32),
-	  to_unsigned(3,32),
-  	  to_unsigned(4,32),
-	  to_unsigned(5,32),
-    x"68206c01",X"70010000",x"08000000",x"DEADDEAD",x"BEEFBEEF",x"CAFECAFE",x"31415926"  );    
-BEGIN
- 
+          to_unsigned(0,32),
+          to_unsigned(11,32),
+          to_unsigned(1,32),
+          to_unsigned(1024,32),
+          B"1_0_00_00_00100_00000" & to_unsigned(13,16), -- mov r4 0
+          B"1_0_00_00_00001_00000" & to_unsigned(0,16), -- mov r1 0
+          B"1_0_00_00_00010_00000" & to_unsigned(1,16), -- mov r2 1
+          B"0_0_11_00_00000_00100" & unsigned(to_signed(6,16)),   --loop:beq 0 r4 loopend
+          B"1_0_00_00_00011_00001" & to_unsigned(0,16), -- mov r3 r1
+          B"1_0_00_00_00001_00010" & to_unsigned(0,16), -- mov r1 r2
+          B"0_0_00_00_00010_00001_00011_0000000000_1", -- add r2 r1 r3
+          B"1_0_00_01_00100_00100" & to_unsigned(1,16), --subi r4 r4 1
+          B"0_0_00_10_00000_00000" &to_unsigned(1027,16), -- j loop
+          B"0_0_00_00_00000_00001_00000_0000000011_0", --loop_end:out r1
+          to_unsigned(0,32),--hlt
+          x"50000000",
+          x"00EFBEEF",
+          x"C0FFEEEE");
+begin
+
 	-- Instantiate the Unit Under Test (UUT)
-   uut: aquila PORT MAP (
+   uut: aquila port map (
           MCLK1 => MCLK1,
           RS_RX => RS_RX,
           RS_TX => RS_TX,
@@ -123,6 +162,8 @@ BEGIN
           ZCLKMA => ZCLKMA
         );
 
+
+   m:mem port map (ZD=>ZD,ZA=>ZA,XWA=>XWA,clk=>MCLK1);
    -- Clock process definitions
    MCLK1_process :process
    begin
@@ -131,32 +172,46 @@ BEGIN
 		MCLK1 <= '1';
 		wait for MCLK1_period/2;
    end process;
- 
+
 
    -- Stimulus process
    stim_proc: process
-   begin		
-      -- hold reset state for 100 ns.
-      wait for 100 ns;	
+    variable FREAD_CHAR:character;
+    variable data:byte:=x"00";
+   begin
+     -- hold reset state for 100 ns.
+      wait for 100 ns;
 
       wait for MCLK1_period*10;
 
-      
-
-      -- insert stimulus here 
-       for I in 0 to ROMMAX loop
-         for k in 0 to 3 loop
-           rs_rx<='0';
-           wait for IO_section_time;
-           for J in 0 to 7 loop
-             rs_rx<=rom(I)(24-8*k+j);
-             wait for IO_SECTION_TIME;
-           end loop;
-         rs_rx<='1';
-         wait for IO_SECTION_TIME;		 
-       end loop;
-     end loop;
+      -- insert stimulus here
+      if ISROM then
+        for I in 0 to ROMMAX loop
+          for k in 0 to 3 loop
+            rs_rx<='0';
+            wait for IO_section_time;
+            for J in 0 to 7 loop
+              rs_rx<=rom(I)(24-8*k+j);
+              wait for IO_SECTION_TIME;
+            end loop;
+            rs_rx<='1';
+            wait for IO_SECTION_TIME;
+          end loop;
+        end loop;
+      else
+        while(endfile(FILEPOINT)=false) loop
+          read( FILEPOINT, FREAD_CHAR );
+          data:= (to_unsigned(CHARacter'pos(FREAD_CHAR),8));
+          rs_rx<='0';
+          wait for IO_section_time;
+          for J in 0 to 7 loop
+            rs_rx<=data(j);
+            wait for IO_SECTION_TIME;
+          end loop;
+          rs_rx<='1';
+          wait for IO_SECTION_TIME;
+        end loop;
+      end if;
       wait;
    end process;
-
-END;
+end;
