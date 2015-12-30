@@ -44,7 +44,7 @@ ENTITY finv_table IS
   PORT (
     clka : IN STD_LOGIC;
     addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
-    douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+    douta : OUT STD_LOGIC_VECTOR(45 DOWNTO 0)
   );
 END finv_table;
 
@@ -54,7 +54,7 @@ COMPONENT wrapped_finv_table
   PORT (
     clka : IN STD_LOGIC;
     addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
-    douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+    douta : OUT STD_LOGIC_VECTOR(45 DOWNTO 0)
   );
 END COMPONENT;
 
@@ -99,8 +99,8 @@ END COMPONENT;
       c_prim_type => 1,
       c_read_depth_a => 1024,
       c_read_depth_b => 1024,
-      c_read_width_a => 32,
-      c_read_width_b => 32,
+      c_read_width_a => 46,
+      c_read_width_b => 46,
       c_rst_priority_a => "CE",
       c_rst_priority_b => "CE",
       c_rst_type => "SYNC",
@@ -119,8 +119,8 @@ END COMPONENT;
       c_write_depth_b => 1024,
       c_write_mode_a => "WRITE_FIRST",
       c_write_mode_b => "WRITE_FIRST",
-      c_write_width_a => 32,
-      c_write_width_b => 32,
+      c_write_width_a => 46,
+      c_write_width_b => 46,
       c_xdevicefamily => "virtex5"
     );
 -- synthesis translate_on

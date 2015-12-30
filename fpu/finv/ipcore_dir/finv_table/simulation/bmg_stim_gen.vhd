@@ -126,7 +126,7 @@ ENTITY BMG_STIM_GEN IS
             CLK : IN STD_LOGIC;
             RST : IN STD_LOGIC;
             ADDRA: OUT  STD_LOGIC_VECTOR(9 DOWNTO 0) := (OTHERS => '0'); 
-            DATA_IN : IN STD_LOGIC_VECTOR (31 DOWNTO 0);   --OUTPUT VECTOR         
+            DATA_IN : IN STD_LOGIC_VECTOR (45 DOWNTO 0);   --OUTPUT VECTOR         
             STATUS : OUT STD_LOGIC:= '0'
     	  );
 END BMG_STIM_GEN;
@@ -171,20 +171,20 @@ CONSTANT ZERO : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 SIGNAL READ_ADDR_INT : STD_LOGIC_VECTOR(9 DOWNTO 0) := (OTHERS => '0');
 SIGNAL READ_ADDR : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 SIGNAL CHECK_READ_ADDR : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
-SIGNAL EXPECTED_DATA : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
+SIGNAL EXPECTED_DATA : STD_LOGIC_VECTOR(45 DOWNTO 0) := (OTHERS => '0');
 SIGNAL DO_READ : STD_LOGIC := '0';
 SIGNAL CHECK_DATA : STD_LOGIC := '0';
 SIGNAL CHECK_DATA_R : STD_LOGIC := '0';
 SIGNAL CHECK_DATA_2R : STD_LOGIC := '0';
 SIGNAL DO_READ_REG: STD_LOGIC_VECTOR(4 DOWNTO 0) :=(OTHERS => '0');
-CONSTANT DEFAULT_DATA  : STD_LOGIC_VECTOR(31 DOWNTO 0):= hex_to_std_logic_vector("0",32);
+CONSTANT DEFAULT_DATA  : STD_LOGIC_VECTOR(45 DOWNTO 0):= hex_to_std_logic_vector("0",46);
 
 BEGIN
 
 
 SYNTH_COE:  IF(C_ROM_SYNTH =0 ) GENERATE
 
-type mem_type is array (1023 downto 0) of std_logic_vector(31 downto 0);
+type mem_type is array (1023 downto 0) of std_logic_vector(45 downto 0);
 
   FUNCTION bit_to_sl(input: BIT) RETURN STD_LOGIC IS
     VARIABLE temp_return : STD_LOGIC;
@@ -228,7 +228,7 @@ type mem_type is array (1023 downto 0) of std_logic_vector(31 downto 0);
 impure FUNCTION init_memory( C_USE_DEFAULT_DATA : INTEGER;
                        C_LOAD_INIT_FILE : INTEGER ;
 					   C_INIT_FILE_NAME : STRING ;
-                       DEFAULT_DATA   :  STD_LOGIC_VECTOR(31 DOWNTO 0);
+                       DEFAULT_DATA   :  STD_LOGIC_VECTOR(45 DOWNTO 0);
                        width : INTEGER;
                        depth         : INTEGER)
   RETURN mem_type IS
@@ -289,7 +289,7 @@ constant c_init : mem_type := init_memory(0,
                                           1,
 										  "finv_table.mif",
                                            DEFAULT_DATA,
-                                          32,
+                                          46,
                                           1024);
 
 
