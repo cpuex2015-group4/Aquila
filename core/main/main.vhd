@@ -9,6 +9,7 @@ library work;
 use work.global_types.all;
 use work.ISA.all;
 use work.alu_package.all;
+use work.fpu_interface.all;
 
 package main_interface is
   type main_in_type is record
@@ -63,6 +64,7 @@ use work.global_types.all;
 use work.main_interface.all;
 use work.ISA.all;
 use work.alu_package.all;
+use work.fpu_interface.all;
 
 entity main is
   port(
@@ -73,6 +75,15 @@ entity main is
 end main;
 
 architecture twoproc of main is
+  --component
+  component fpu
+  port(
+    clk,rst:in  std_logic;
+    port_in       :in  fpu_in_type;
+    port_out      :out fpu_out_type
+  );
+  end component;
+
   --types and constants
   type state_type is (init,ready,running,hlt);
 
@@ -166,8 +177,11 @@ architecture twoproc of main is
     clk_count=>(others=>'0')
     );
   signal r,rin:reg_type:=r_init;
+  signal fpu_input:fpu_in_type:=fpu_in_init;
+  signal fpu_output:fpu_out_type:=fpu_out_init;
 begin
-  comb:process(r,port_in)
+  FPU_UNIT:fpu port map(clk,rst,fpu_input,fpu_output);
+  comb:process(r,port_in,fpu_output)
     variable v:reg_type;
     variable vnextPC:word;
     variable inst_info:inst_info_type;
@@ -208,24 +222,39 @@ begin
         v.D.inst_info:=inst_info;
 
 
-        if v.d.inst_info.rd/=0 and v.d.inst_info.rd= r.ex.inst_info.rd and r.ex.inst_info.format/=B then
+        if v.d.inst_info.rd/=0 and v.d.inst_info.rd= r.ex.inst_info.rd and r.ex.inst_info.format/=B
+          and v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
           v.d.compared:=r.ex.result;
         else
-          v.d.compared:=r.regfile(to_integer(inst_info.rd));
+          if v.d.inst_info.isFPR then
+            v.d.compared:=r.fregfile(to_integer(inst_info.rd));
+          else
+            v.d.compared:=r.regfile(to_integer(inst_info.rd));
+          end if;
         end if;
-        if v.d.inst_info.rs/=0 and v.d.inst_info.rs= r.ex.inst_info.rd and r.ex.inst_info.format/=B  then
+        if v.d.inst_info.rs/=0 and v.d.inst_info.rs= r.ex.inst_info.rd and r.ex.inst_info.format/=B
+          and v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
           v.d.operand1:=r.ex.result;
         else
-          v.D.operand1:=r.regfile(to_integer(inst_info.rs));
+          if v.d.inst_info.isFPR then
+            v.D.operand1:=r.fregfile(to_integer(inst_info.rs));
+          else
+            v.D.operand1:=r.regfile(to_integer(inst_info.rs));
+          end if;
         end if;
 
         if inst_info.isimmediate then
           v.D.operand2:=unsigned(resize(signed(inst_info.immediate),word_size));
         else
-          if v.d.inst_info.rt/=0 and v.d.inst_info.rt= r.ex.inst_info.rd and r.ex.inst_info.format/=B  then
+          if v.d.inst_info.rt/=0 and v.d.inst_info.rt= r.ex.inst_info.rd and r.ex.inst_info.format/=B and
+            v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
             v.D.operand2:=r.ex.result;
           else
-            v.D.operand2:=r.regfile(to_integer(inst_info.rt));
+            if v.d.inst_info.isFPR then
+              v.D.operand2:=r.fregfile(to_integer(inst_info.rt));
+            else
+              v.D.operand2:=r.regfile(to_integer(inst_info.rt));
+            end if;
           end if;
         end if;
 
@@ -321,13 +350,18 @@ begin
          end if;
 
          if r.Ex.inst_info.format/=B then
-           v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
+           if r.ex.inst_info.isFPR then
+             v.fregfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
+           else
+             v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
+           end if;
          end if;
         end if;
       when hlt=>
     end case;
 
     v.regfile(0):=to_unsigned(0,word_size);
+    v.fregfile(0):=to_unsigned(0,word_size);
     --######################## Out and rin######################
     rin<=v;
     port_out<=r.output;
