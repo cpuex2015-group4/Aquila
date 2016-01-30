@@ -66,13 +66,13 @@ architecture twoproc of fpu is
       input  : in  std_logic_vector (31 downto 0);
       output : out std_logic_vector (31 downto 0));
   end component;
-  component ftoi
-    Port (
-      clk    : in  std_logic;
-      input  : in  STD_LOGIC_VECTOR (31 downto 0);
-      output : out STD_LOGIC_VECTOR (31 downto 0);
-      flag   : out STD_LOGIC_VECTOR ( 1 downto 0)); -- underflow / overflow
-  end component;
+--  component ftoi
+--    Port (
+--      clk    : in  std_logic;
+--      input  : in  STD_LOGIC_VECTOR (31 downto 0);
+--      output : out STD_LOGIC_VECTOR (31 downto 0);
+--      flag   : out STD_LOGIC_VECTOR ( 1 downto 0)); -- underflow / overflow
+--  end component;
 
 
   --types and constants
@@ -109,7 +109,7 @@ begin
   FD:fadd port map(clk,std_logic_vector(port_in.operand1),std_logic_vector(fadd_operand),result.add);
   FM:fmul port map(std_logic_vector(port_in.operand1),std_logic_vector(port_in.operand2),result.mul);
   FI:finv port map(clk,std_logic_vector(port_in.operand1),result.inv);
-  F2I:ftoi port map(clk,std_logic_vector(port_in.operand1),result.f2i,ftoiflag);
+--  F2I:ftoi port map(clk,std_logic_vector(port_in.operand1),result.f2i,ftoiflag);
 --  I2F:itof port map(clk,std_logic_vector(port_in.operand1),result.i2f);
 
   with (port_in.ALU_control) select
