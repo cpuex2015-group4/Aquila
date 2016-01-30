@@ -16,8 +16,8 @@ package fpu_interface is
   end record;
   constant fpu_in_init:fpu_in_type:=(
     ALU_control=>ALU_nop,
-    operand1=>(others=>'X'),
-    operand2=>(others=>'X')
+    operand1=>(others=>'0'),
+    operand2=>(others=>'0')
     );
   type fpu_out_type is record
     result:word;
