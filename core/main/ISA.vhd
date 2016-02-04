@@ -129,7 +129,7 @@ package ISA is
     ALU=>ALU_NOP,
     HLT=>false
     );
-
+  constant inst_nop:inst_info_type:=inst_info_init;
   function Decode(inst:word) return inst_info_type;
 end package;
 
