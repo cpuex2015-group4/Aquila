@@ -8,6 +8,7 @@ use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
 use work.ISA.all;
+use work.staller.all;
 use work.alu_package.all;
 use work.fpu_interface.all;
 
@@ -107,6 +108,7 @@ architecture twoproc of main is
     compared:word;
     operand1:word;
     operand2:word;
+    Mem_addr:SRAM_ADDR_TYPE;
     IO_input:word;
     NOP:boolean;
     HLT:boolean;
@@ -118,6 +120,7 @@ architecture twoproc of main is
       compared=>(others=>'X'),
       operand1=>(others=>'X'),
       operand2=>(others=>'X'),
+      Mem_addr=>(others=>'0'),
       IO_input=>(others=>'X'),
       NOP=>true,
       HLT=>false
@@ -155,7 +158,6 @@ architecture twoproc of main is
 
   type reg_type is record
     state:state_type;
-    output:main_out_type;
     regfile:reg_file_t;
     fregfile:reg_file_t;
     F:Fetch_reg_t;
@@ -167,7 +169,6 @@ architecture twoproc of main is
   end record;
   constant r_init:reg_type :=(
     state=>init,
-    output=>main_out_init,
     regfile=>reg_file_init,
     fregfile=>reg_file_init,
     F=>Fetch_reg_init,
@@ -185,6 +186,7 @@ begin
     variable v:reg_type;
     variable vnextPC:word;
     variable inst_info:inst_info_type;
+    variable result:word;
   begin
     v:=r;
     vnextPC:=(others=>'X');
@@ -204,168 +206,15 @@ begin
         v.F.Nop:=false;
         v.state:=running;
       when running=>
-        v.clk_count:=r.clk_count+1;
-        v.output:=main_out_init;
-        --F
---        v.F.PC:=r.F.PC+1;
-        --D
-        v.D.NOP:=r.f.nop;
-        v.D.PC:=r.F.PC;
-        if r.D.NOP then
-          inst_info:=v.D.inst_info;
-          v.d.instruction:=v.d.instruction;
-        else
-          inst_info:=Decode(port_in.instruction);
-          v.d.instruction:=port_in.instruction;
-        end if;
-        v.d.hlt:=inst_info.hlt or r.d.hlt;
-        v.D.inst_info:=inst_info;
 
-
-        if v.d.inst_info.rd/=0 and v.d.inst_info.rd= r.ex.inst_info.rd and r.ex.inst_info.format/=B
-          and v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
-          v.d.compared:=r.ex.result;
-        else
-          if v.d.inst_info.isFPR then
-            v.d.compared:=r.fregfile(to_integer(inst_info.rd));
-          else
-            v.d.compared:=r.regfile(to_integer(inst_info.rd));
-          end if;
-        end if;
-        if v.d.inst_info.rs/=0 and v.d.inst_info.rs= r.ex.inst_info.rd and r.ex.inst_info.format/=B
-          and v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
-          v.d.operand1:=r.ex.result;
-        else
-          if v.d.inst_info.isFPR then
-            v.D.operand1:=r.fregfile(to_integer(inst_info.rs));
-          else
-            v.D.operand1:=r.regfile(to_integer(inst_info.rs));
-          end if;
-        end if;
-
-        if inst_info.isimmediate then
-          v.D.operand2:=unsigned(resize(signed(inst_info.immediate),word_size));
-        else
-          if v.d.inst_info.rt/=0 and v.d.inst_info.rt= r.ex.inst_info.rd and r.ex.inst_info.format/=B and
-            v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
-            v.D.operand2:=r.ex.result;
-          else
-            if v.d.inst_info.isFPR then
-              v.D.operand2:=r.fregfile(to_integer(inst_info.rt));
-            else
-              v.D.operand2:=r.regfile(to_integer(inst_info.rt));
-            end if;
-          end if;
-        end if;
-
-        if inst_info.isJMP then
-          v.f.pc:=v.d.operand2;
-        elsif inst_info.format=B then
-          case inst_info.Branch is
-            when B_BEQ=>
-              if v.d.compared=v.d.operand1 then
-                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
-              else
-                v.f.pc:=r.f.pc+1;
-              end if;
-            when B_BLT=>
-              if signed(v.d.compared)<signed(v.d.operand1) then
-                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
-              else
-                v.f.pc:=r.f.pc+1;
-              end if;
-            when B_BLE=>
-              if signed(v.d.compared)<=signed(v.d.operand1) then
-                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
-              else
-                v.f.pc:=r.f.pc+1;
-              end if;
-            when B_NOBRANCH=>
-              v.f.pc:=r.f.pc+1;
-          end case;
-        else
-          v.f.pc:=r.f.pc+1;
-        end if;
-        if inst_info.isLNK then
-          v.regfile(reg_ra):=r.f.PC+1;
-        end if;
-        if inst_info.IO_RE then
-          if port_in.IO_empty then
-            v.output.PC:=r.output.PC;
-            v.F:=r.F;
-            v.D.NOP:=true;
-          else
-            v.output.IO_RE:=true;
-            v.D.IO_input:=port_in.IO_data;
-          end if;
-        end if;
-
-        -----------Ex------------------------------------------
-        --Forwading
-        if  r.d.inst_info.rs=0 then
-          v.ex.operand1:=to_unsigned(0,word_size);
-        elsif r.d.inst_info.rs=r.ex.inst_info.rd then
-          v.ex.operand1:=r.ex.result;
-        else
-          v.ex.operand1:=r.d.operand1;
-        end if;
-        if  r.d.inst_info.rt=0 and not r.d.inst_info.isimmediate then
-          v.ex.operand2:=to_unsigned(0,word_size);
-        elsif r.d.inst_info.rt=r.ex.inst_info.rd and not r.d.inst_info.isimmediate then
-          v.ex.operand2:=r.ex.result;
-        else
-          v.ex.operand2:=r.d.operand2;
-        end if;
-
-        --main
-        v.ex.hlt:=r.d.hlt;
-        v.Ex.NOP:=r.D.NOP;
-        v.Ex.PC:=r.D.PC;
-        v.ex.inst_info:=r.d.inst_info;
-
-        --main
-        if r.d.inst_info.IO_RE then
-          v.ex.result:=r.d.IO_input;
-        else
-          V.ex.result:=alu(v.ex.operand1,v.ex.operand2,v.ex.inst_info.alu);
-        end if;
-        ---------Wb------------------------------------------
-        if r.ex.hlt then
-          v.state:=hlt;
-        end if;
-
-        v.Wb.NOP:=r.Ex.NOP;
-        if r.ex.nop then
-          null;
-        else
-         if r.ex.inst_info.IO_WE then
-           if port_in.IO_full then
-             v.output.PC:=r.output.PC;
-             v.F:=r.F;
-             v.D.NOP:=true;
-           else
-             v.output.IO_WE:=true;
-             v.output.IO_data:=r.Ex.result;
-           end if;
-         end if;
-
-         if r.Ex.inst_info.format/=B then
-           if r.ex.inst_info.isFPR then
-             v.fregfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
-           else
-             v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
-           end if;
-         end if;
-        end if;
+        v.regfile(0):=(others=>'0');
+        v.fregfile(0):=(others=>'0');
       when hlt=>
     end case;
 
-    v.regfile(0):=to_unsigned(0,word_size);
-    v.fregfile(0):=to_unsigned(0,word_size);
-    --######################## Out and rin######################
+   --######################## Out and rin######################
+    --update
     rin<=v;
-    port_out<=r.output;
-    port_out.PC<=v.F.PC;
   end process;
 
   regs:process(clk,rst)
