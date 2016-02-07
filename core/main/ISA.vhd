@@ -80,17 +80,18 @@ package ISA is
   type ALU_control_type is
     (alu_nop,alu_itof,alu_ftoi,
      alu_add,alu_fadd,alu_sub,alu_fsub,alu_fmul,alu_fdiv,alu_sll,alu_srl,alu_finv,alu_fsqrt);
-  type data_src_type is (from_alu,from_fpu,from_MEM);
+  type data_src_type is (from_alu,from_fpu,from_MEM,from_io);
   type B_type is (B_BEQ,B_BLT,B_BLE,B_NOBRANCH);
   type inst_info_type is record
     format:format_type;
     OPecode:ope_type;
     opt:opt_type;
     isImmediate:boolean;
-    isFPR:boolean;
+    fromFPR:boolean;
+    toFPR:boolean;
     isJMP:boolean;
     isLNK:boolean;
-    Branch:B_type;
+    Branch:B_type; 
     MEM_WE:boolean;
     MEM_RE:boolean;
     IO_WE:boolean;
@@ -111,7 +112,8 @@ package ISA is
     OPecode=>(others=>'X'),
     opt=>(others=>'X'),
     isImmediate=>false,
-    isFPR=>false,
+    fromFPR=>false,
+    toFPR=>false,
     isJMP=>false,
     isLNK=>false,
     Branch=>B_NOBRANCH,
@@ -131,6 +133,7 @@ package ISA is
     );
   constant inst_nop:inst_info_type:=inst_info_init;
   function Decode(inst:word) return inst_info_type;
+  function IsBranch(operand1:word,operand2:word,B:B_type) return boolean;
 end package;
 
 package body ISA is
@@ -151,7 +154,8 @@ package body ISA is
     info.immediate:=inst(15 downto 0);
     opt:=inst(29 downto 28);
     info.isImmediate:=to_boolean(inst(31));
-    info.isFPR:=to_boolean(inst(30));
+    info.fromFPR:=to_boolean(inst(30));
+    info.toFPR:=to_boolean(inst(30));
     if inst(31)='1' then
       info.format:=RI;
     elsif info.Opecode=0 and inst(0)='0' then
@@ -185,7 +189,7 @@ package body ISA is
     end if;
     info.IO_WE:=(info.format=X) and info.funct= OP_OUT;
     info.IO_RE:=(info.format=X) and info.funct=OP_IN;
-
+    if info.IO_RE then info.data_src:=from_IO;
     case info.format is
       when X=>
         case info.funct is
@@ -201,7 +205,7 @@ package body ISA is
       when B=>
         info.ALU:=ALU_NOP;
       when RI=>
-        if opt=opt_shiftinvsqrt and not(info.isFPR) then
+        if opt=opt_shiftinvsqrt and not(info.fromFPR) then
           case bit_image is
             when OP_SLL =>
               info.ALU:=ALU_SLL;
@@ -211,7 +215,7 @@ package body ISA is
               info.ALU:=ALU_NOP;
           end case;
         else
-          if info.isFPR then
+          if info.fromFPR then
             info.data_src:=from_fpu;
             case bit_image is
               when OP_ADD =>
@@ -246,5 +250,13 @@ package body ISA is
     end case;
 
     return info;
+  end function;
+
+  function IsBranch(operand1:word,operand2:word,B:B_type) return boolean IS
+  begin
+    return
+      signed(operand1)<signed(operand2) and B=BLT or
+      signed(operand1)<=signed(operand2) and B=BLE or
+      signed(operand1)=signed(operand2) and B=BEQ;
   end function;
 end ISA;

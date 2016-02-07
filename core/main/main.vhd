@@ -94,66 +94,52 @@ architecture twoproc of main is
 
   type Fetch_reg_t is record
     PC:word;
-    NOP:boolean;
   end record;
   constant Fetch_reg_init:Fetch_reg_t:=(
-    PC=>(others=>'X'),
-    NOP=>true
+    PC=>(others=>'X')
   );
 
   type Decode_reg_t is record
     PC:word;
-    instruction:word;
     inst_info:inst_info_type;
-    compared:word;
-    operand1:word;
-    operand2:word;
-    Mem_addr:SRAM_ADDR_TYPE;
-    IO_input:word;
-    NOP:boolean;
-    HLT:boolean;
+    jmp_addr:word;
   end record;
     constant Decode_reg_init:Decode_reg_t:=(
       PC=>(others=>'X'),
-      instruction=>(others=>'X'),
       inst_info=>inst_info_init,
-      compared=>(others=>'X'),
-      operand1=>(others=>'X'),
-      operand2=>(others=>'X'),
-      Mem_addr=>(others=>'0'),
-      IO_input=>(others=>'X'),
-      NOP=>true,
-      HLT=>false
+      JMP_ADDR=>(others=>'X')
   );
     type Exe_reg_t is record
       PC:word;
       inst_info:inst_info_type;
-      instruction:word;
-      compared:word;
+      BranchTaken:boolean;
       operand1:word;
       operand2:word;
+      Mem_addr:word;
+      Mem_data:word;
       result:word;
-      NOP:boolean;
-      HLT:boolean;
-  end record;
+    end record;
     constant Exe_reg_init:Exe_reg_t:=(
     PC=>(others=>'X'),
-    instruction=>(others=>'X'),
-    inst_info=>inst_info_init,
-    compared=>(others=>'X'),
+    inst_info=>inst_info_init, 
+    BranchTaken=>false,
     result=>(others=>'X'),
     operand1=>(others=>'X'),
     operand2=>(others=>'X'),
-    NOP=>true,
-    HLT=>false
+    Mem_addr=>(others=>'0'),
+    Mem_data=>(others=>'X')
   );
   type WB_reg_t is record
     PC:word;
-    NOP:boolean;
+    Is_Ex_Mem_data_saved:boolean;  --stallでタイミングが狂った時に必要。高々一つ確保しておけば問題なし。
+    Ex_Mem_data:word;
+    result:word;
   end record;
     constant WB_reg_init:WB_reg_t:=(
     PC=>(others=>'X'),
-    NOP=>true
+    Is_Ex_Mem_data_saved=>false,
+    Ex_Mem_data=>(others=>'X'),
+    result=>(others=>'X')
   );
 
   type reg_type is record
@@ -164,7 +150,6 @@ architecture twoproc of main is
     D:Decode_reg_t;
     EX:Exe_reg_t;
     WB:WB_reg_t;
-    --to debug
     clk_count:dword;
   end record;
   constant r_init:reg_type :=(
@@ -184,9 +169,6 @@ begin
   FPU_UNIT:fpu port map(clk,rst,fpu_input,fpu_output);
   comb:process(r,port_in,fpu_output)
     variable v:reg_type;
-    variable vnextPC:word;
-    variable inst_info:inst_info_type;
-    variable result:word;
   begin
     v:=r;
     vnextPC:=(others=>'X');
@@ -206,27 +188,108 @@ begin
         v.F.Nop:=false;
         v.state:=running;
       when running=>
+        v.clk_count:=r.clk_count+1;
+        --************************WB**********************
+        if ex.inst_info.hlt then
+          v.state:=hlt;
+        end if;
 
+        --resultを決定する
+        case r.ex.inst.info.data_src is
+          when =>from_alu
+            v.ex.result:=r.ex.result;
+          when =>from_fpu
+          when =>from_mem
+            v.ex.result:=port_in.mem_data;
+          when =>from_IO
+            v.ex.result:=port_in.IO_data;
+        end case;
+        v.wb.result:=r.ex.result;
+
+        if r.ex.inst_info.reg_we then
+          r.regfile(integer(r.ex.inst_info.rt)):=v.wb.result;
+        end if;
+        --************************Ex**********************
+        v.Ex.PC:=r.D.PC;
+        v.EX.inst_info:=r.d.inst_info;
+        v.ex.operand1:=r.regfile(r.d.inst_info.rs); --ココらへんはそのうちforwarderに投げる
+        if r.d.inst_info.isImmediate then
+         v.ex.operand2:=r.d.inst_info.immediate;
+        else
+          v.ex.operand2:=r.regfile(r.d.inst_info.rt);
+        end if;
+        v.ex.result:=alu(v.ex.operand1,v.ex.operand2,r.d.inst_info.alu);
+        v.ex.BranchTaken:=IsBranch(r.regfile(integer(r.d.inst_info.rd)));
+        v.mem_addr:=resize(
+          r.regfile(integer(signed(r.d.inst_info.rs)))+
+          resize(signed(r.d.inst_info.immediate),32)
+          ,20);
+        --************************D***********************
+        v.D.PC:=r.F.PC;
+        v.D.inst_info:=Decode(port_in.instruction);
+        if v.d.inst_info.isImmediate then
+          v.d.jmp_addr:=v.d.inst_info.immediate;
+        else
+          v.d.jmp_addr:=r.regfile(integer(v.d.inst_info.rt));
+        end if;
         --************************F***********************
         --decide next F
-        v.F.PC:=r.F.PC+1;
 
-        --************************D***********************
-        
-        --************************Ex**********************
-
-        --************************WB**********************
-
+        if r.D.inst_info.isJMP then
+          v.F.PC:=v.d.jmp_addr;
+        else
+          v.F.PC:=r.F.PC+1;
+        end if;
 
         --************************************************
-          v.regfile(0):=(others=>'0');
+        v.regfile(0):=(others=>'0');
         v.fregfile(0):=(others=>'0');
       when hlt=>
     end case;
 
    --######################## Out and rin######################
-    --update
-    rin<=v;
+
+    --output and update
+    --from stage-F
+    if F-hold then
+      rin.F<=r.F;
+      port_out.PC<=r.F.PC;
+    else
+      rin.F<=v.F
+      port_out.PC<=v.F.PC;
+    end if;
+    --from stage-D
+    if D-hold then
+      rin.D<=r.D;
+    else
+      rin.D<=v.D;
+    end if;
+    --from stage-Ex
+    if Ex-hold then
+      rin.Ex<=r.Ex;
+      port_out.Mem_addr<=(others=>'1');
+      port_out.Mem_data<=(others=>'X');
+      port_out.Mem_we<=false;
+      port_out.Mem_re<=false;
+      port_out.IO_data<=(others=>'X');
+      port_out.IO_RE<=false;
+      port_out.IO_WE<=false;
+    else
+      rin.D<=v.Ex;
+      port_out.Mem_addr<=v.ex.mem_addr;
+      port_out.Mem_data<=v.ex.mem_data;
+      port_out.Mem_we<=v.ex.inst_info.mem_we;
+      port_out.Mem_re<=v.ex.inst_info.mem_re;
+      port_out.IO_data<=v.ex.inst_info.IO_data;
+      port_out.IO_RE<=v.ex.inst_info.IO_re;
+      port_out.IO_WE<=v.ex.inst_info.IO_we;
+    end if;
+    --from stage-Wb
+    if Wb-hold then
+      rin.Wb<=r.Wb;
+    else
+      rin.Wb<=v.Wb;
+    end if;
   end process;
 
   regs:process(clk,rst)
