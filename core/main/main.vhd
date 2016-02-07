@@ -63,6 +63,7 @@ use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
 use work.main_interface.all;
+use work.staller.all;
 use work.ISA.all;
 use work.alu_package.all;
 use work.fpu_interface.all;
@@ -84,6 +85,14 @@ architecture twoproc of main is
     port_out      :out fpu_out_type
   );
   end component;
+
+  component staller
+  port(
+    clk,rst:in  std_logic;
+    port_in       :in  staller_in_type;
+    port_out      :out staller_out_type;
+  );
+  end staller;
 
   --types and constants
   type state_type is (init,ready,running,hlt);
@@ -165,9 +174,12 @@ architecture twoproc of main is
   signal r,rin:reg_type:=r_init;
   signal fpu_input:fpu_in_type:=fpu_in_init;
   signal fpu_output:fpu_out_type:=fpu_out_init;
+  signal stall_in:staller_in_type:=staller_in_init;
+  signal stall_out:staller_out_type:=staller_out_init;
 begin
   FPU_UNIT:fpu port map(clk,rst,fpu_input,fpu_output);
-  comb:process(r,port_in,fpu_output)
+  STALLER_unit:staller port map(clk,rst,stall_in,stall_out);
+  comb:process(r,port_in,fpu_output,stall_out)
     variable v:reg_type;
   begin
     v:=r;
@@ -194,8 +206,19 @@ begin
           v.state:=hlt;
         end if;
 
+        --hazard chcek
+        if (port_in.IO_empty and r.ex.inst_info.IO_RE) or
+          (r.ex.inst_info.Mem_RE and not(port_in.Mem_hit)) then
+          stall_in.wb_hazzard<=true;
+          v.wb.inst_info:=inst_nop;
+        else
+          stall_in.wb_hazzard<=false;
+          v.wb.inst_info:=r.ex_inst_info;
+        end if;
+        --/hazzard check 終わり
+
         --resultを決定する
-        case r.ex.inst.info.data_src is
+        case v.wb.inst.info.data_src is
           when =>from_alu
             v.ex.result:=r.ex.result;
           when =>from_fpu
@@ -210,6 +233,10 @@ begin
           r.regfile(integer(r.ex.inst_info.rt)):=v.wb.result;
         end if;
         --************************Ex**********************
+
+        --hazzard check
+        stall_in.ex_hazzard<=false;
+        --/hazzard check 終わり
         v.Ex.PC:=r.D.PC;
         v.EX.inst_info:=r.d.inst_info;
         v.ex.operand1:=r.regfile(r.d.inst_info.rs); --ココらへんはそのうちforwarderに投げる
@@ -251,7 +278,7 @@ begin
 
     --output and update
     --from stage-F
-    if F-hold then
+    if stall_out.f_stall then
       rin.F<=r.F;
       port_out.PC<=r.F.PC;
     else
@@ -259,13 +286,13 @@ begin
       port_out.PC<=v.F.PC;
     end if;
     --from stage-D
-    if D-hold then
+    if stall_out.d_stall then
       rin.D<=r.D;
     else
       rin.D<=v.D;
     end if;
     --from stage-Ex
-    if Ex-hold then
+    if stall_out.ex_stall then
       rin.Ex<=r.Ex;
       port_out.Mem_addr<=(others=>'1');
       port_out.Mem_data<=(others=>'X');
@@ -285,7 +312,7 @@ begin
       port_out.IO_WE<=v.ex.inst_info.IO_we;
     end if;
     --from stage-Wb
-    if Wb-hold then
+    if stall_out.wb_stall then
       rin.Wb<=r.Wb;
     else
       rin.Wb<=v.Wb;

@@ -9,11 +9,14 @@ library work;
 use global_types.all;
 
 package staller_interface is
+
   type staller_in_type is record
-    activate:boolean;
+    Ex_hazzard:boolean;
+    Wb_hazzard:boolean;
   end record;
   constant staller_in_init:staller_in_type:=(
-    activate=>false
+    Ex_hazzard=>false,
+    Wb_hazzard=>false
     );
   type staller_out_type is record
     F_stall:boolean;
@@ -40,7 +43,7 @@ entity staller is
   port(
     clk,rst:in  std_logic;
     port_in       :in  staller_in_type;
-    port_out      :out staller_out_type
+    port_out      :out staller_out_type;
   );
 end staller;
 
@@ -52,9 +55,10 @@ begin
     varible vout:port_out;
   begin
     vout:=staller_out_init;
-      --########################main logic########################
 
-      --######################## Out and rin######################
-      port_out<=vout;
+    vout.F_stall:=Ex_hazzard or Wb_hazzard;
+    vout.D_stall:=Ex_hazzard or Wb_hazzard;
+    vout.Ex_stall:=Wb_hazzard;
+    port_out<=vout;
   end process;
 end RTL;
