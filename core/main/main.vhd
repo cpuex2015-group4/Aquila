@@ -8,7 +8,7 @@ use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
 use work.ISA.all;
-use work.staller.all;
+use work.staller_interface.all;
 use work.alu_package.all;
 use work.fpu_interface.all;
 
@@ -63,7 +63,7 @@ use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
 use work.main_interface.all;
-use work.staller.all;
+use work.staller_interface.all;
 use work.ISA.all;
 use work.alu_package.all;
 use work.fpu_interface.all;
@@ -90,9 +90,9 @@ architecture twoproc of main is
   port(
     clk,rst:in  std_logic;
     port_in       :in  staller_in_type;
-    port_out      :out staller_out_type;
+    port_out      :out staller_out_type
   );
-  end staller;
+  end component;
 
   --types and constants
   type state_type is (init,ready,running,hlt);
@@ -126,6 +126,7 @@ architecture twoproc of main is
       operand2:word;
       Mem_addr:word;
       Mem_data:word;
+		IO_data:word;
       result:word;
     end record;
     constant Exe_reg_init:Exe_reg_t:=(
@@ -136,16 +137,19 @@ architecture twoproc of main is
     operand1=>(others=>'X'),
     operand2=>(others=>'X'),
     Mem_addr=>(others=>'0'),
+	 IO_data=>(others=>'X'),
     Mem_data=>(others=>'X')
   );
   type WB_reg_t is record
     PC:word;
+	 inst_info:inst_info_type;
     Is_Ex_Mem_data_saved:boolean;  --stallでタイミングが狂った時に必要。高々一つ確保しておけば問題なし。
     Ex_Mem_data:word;
     result:word;
   end record;
     constant WB_reg_init:WB_reg_t:=(
     PC=>(others=>'X'),
+	 inst_info=>inst_info_init,
     Is_Ex_Mem_data_saved=>false,
     Ex_Mem_data=>(others=>'X'),
     result=>(others=>'X')
@@ -183,8 +187,6 @@ begin
     variable v:reg_type;
   begin
     v:=r;
-    vnextPC:=(others=>'X');
-    inst_info:=inst_info_init;
     --########################main logic########################
     case r.state is
       when init=>
@@ -197,12 +199,11 @@ begin
         v.regfile(reg_heap):=port_in.init_information.init_hp;
         v.regfile(reg_stack):=RESIZE(SRAM_ADDR_MAX,32);
         v.F.PC:=port_in.init_information.init_PC-1;
-        v.F.Nop:=false;
         v.state:=running;
       when running=>
         v.clk_count:=r.clk_count+1;
         --************************WB**********************
-        if ex.inst_info.hlt then
+        if r.ex.inst_info.hlt then
           v.state:=hlt;
         end if;
 
@@ -213,24 +214,24 @@ begin
           v.wb.inst_info:=inst_nop;
         else
           stall_in.wb_hazzard<=false;
-          v.wb.inst_info:=r.ex_inst_info;
+          v.wb.inst_info:=r.ex.inst_info;
         end if;
         --/hazzard check 終わり
 
         --resultを決定する
-        case v.wb.inst.info.data_src is
-          when =>from_alu
+        case v.wb.inst_info.data_src is
+          when from_alu=>
             v.ex.result:=r.ex.result;
-          when =>from_fpu
-          when =>from_mem
+          when from_fpu=>
+          when from_mem=>
             v.ex.result:=port_in.mem_data;
-          when =>from_IO
+          when from_IO=>
             v.ex.result:=port_in.IO_data;
         end case;
         v.wb.result:=r.ex.result;
 
         if r.ex.inst_info.reg_we then
-          r.regfile(integer(r.ex.inst_info.rt)):=v.wb.result;
+          v.regfile(to_integer(r.ex.inst_info.rt)):=v.wb.result;
         end if;
         --************************Ex**********************
 
@@ -239,25 +240,24 @@ begin
         --/hazzard check 終わり
         v.Ex.PC:=r.D.PC;
         v.EX.inst_info:=r.d.inst_info;
-        v.ex.operand1:=r.regfile(r.d.inst_info.rs); --ココらへんはそのうちforwarderに投げる
+        v.ex.operand1:=r.regfile(to_integer(r.d.inst_info.rs)); --ココらへんはそのうちforwarderに投げる
         if r.d.inst_info.isImmediate then
-         v.ex.operand2:=r.d.inst_info.immediate;
+         v.ex.operand2:=resize(r.d.inst_info.immediate,32);
         else
-          v.ex.operand2:=r.regfile(r.d.inst_info.rt);
+          v.ex.operand2:=r.regfile(to_integer(r.d.inst_info.rt));
         end if;
         v.ex.result:=alu(v.ex.operand1,v.ex.operand2,r.d.inst_info.alu);
-        v.ex.BranchTaken:=IsBranch(r.regfile(integer(r.d.inst_info.rd)));
-        v.mem_addr:=resize(
-          r.regfile(integer(signed(r.d.inst_info.rs)))+
-          resize(signed(r.d.inst_info.immediate),32)
-          ,20);
+        v.ex.BranchTaken:=IsBranch(r.regfile(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
+        v.ex.mem_addr:=unsigned(
+          signed(r.regfile(to_integer(r.d.inst_info.rs)))+
+          resize(signed(r.d.inst_info.immediate),32));
         --************************D***********************
         v.D.PC:=r.F.PC;
         v.D.inst_info:=Decode(port_in.instruction);
         if v.d.inst_info.isImmediate then
-          v.d.jmp_addr:=v.d.inst_info.immediate;
+          v.d.jmp_addr:=resize(v.d.inst_info.immediate,32);
         else
-          v.d.jmp_addr:=r.regfile(integer(v.d.inst_info.rt));
+          v.d.jmp_addr:=r.regfile(to_integer(v.d.inst_info.rt));
         end if;
         --************************F***********************
         --decide next F
@@ -282,7 +282,7 @@ begin
       rin.F<=r.F;
       port_out.PC<=r.F.PC;
     else
-      rin.F<=v.F
+      rin.F<=v.F;
       port_out.PC<=v.F.PC;
     end if;
     --from stage-D
@@ -302,20 +302,22 @@ begin
       port_out.IO_RE<=false;
       port_out.IO_WE<=false;
     else
-      rin.D<=v.Ex;
-      port_out.Mem_addr<=v.ex.mem_addr;
+      rin.Ex<=v.Ex;
+      port_out.Mem_addr<=resize(v.ex.mem_addr,20);
       port_out.Mem_data<=v.ex.mem_data;
       port_out.Mem_we<=v.ex.inst_info.mem_we;
       port_out.Mem_re<=v.ex.inst_info.mem_re;
-      port_out.IO_data<=v.ex.inst_info.IO_data;
+      port_out.IO_data<=v.ex.IO_data;
       port_out.IO_RE<=v.ex.inst_info.IO_re;
       port_out.IO_WE<=v.ex.inst_info.IO_we;
     end if;
     --from stage-Wb
     if stall_out.wb_stall then
       rin.Wb<=r.Wb;
+      rin.regfile<=r.regfile;
     else
       rin.Wb<=v.Wb;
+      rin.regfile<=v.regfile;
     end if;
   end process;
 

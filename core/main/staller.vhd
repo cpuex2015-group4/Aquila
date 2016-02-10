@@ -6,7 +6,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library work;
-use global_types.all;
+use work.global_types.all;
 
 package staller_interface is
 
@@ -43,7 +43,7 @@ entity staller is
   port(
     clk,rst:in  std_logic;
     port_in       :in  staller_in_type;
-    port_out      :out staller_out_type;
+    port_out      :out staller_out_type
   );
 end staller;
 
@@ -52,13 +52,13 @@ architecture RTL of staller is
 
 begin
   comb:process(port_in)
-    varible vout:port_out;
+    variable vout:staller_out_type;
   begin
     vout:=staller_out_init;
 
-    vout.F_stall:=Ex_hazzard or Wb_hazzard;
-    vout.D_stall:=Ex_hazzard or Wb_hazzard;
-    vout.Ex_stall:=Wb_hazzard;
+    vout.F_stall:=port_in.Ex_hazzard or port_in.Wb_hazzard;
+    vout.D_stall:=port_in.Ex_hazzard or port_in.Wb_hazzard;
+    vout.Ex_stall:=port_in.Wb_hazzard;
     port_out<=vout;
   end process;
 end RTL;
