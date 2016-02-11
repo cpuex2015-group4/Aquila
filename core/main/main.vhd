@@ -231,7 +231,7 @@ begin
         v.wb.result:=r.ex.result;
 
         if r.ex.inst_info.reg_we then
-          v.regfile(to_integer(r.ex.inst_info.rt)):=v.wb.result;
+          v.regfile(to_integer(r.ex.inst_info.rd)):=v.wb.result;
         end if;
         --************************Ex**********************
 
@@ -240,20 +240,25 @@ begin
         --/hazzard check 終わり
         v.Ex.PC:=r.D.PC;
         v.EX.inst_info:=r.d.inst_info;
-        v.ex.operand1:=r.regfile(to_integer(r.d.inst_info.rs)); --ココらへんはそのうちforwarderに投げる
+        v.ex.operand1:=v.regfile(to_integer(r.d.inst_info.rs)); --ココらへんはそのうちforwarderに投げる
         if r.d.inst_info.isImmediate then
          v.ex.operand2:=resize(r.d.inst_info.immediate,32);
         else
-          v.ex.operand2:=r.regfile(to_integer(r.d.inst_info.rt));
+          v.ex.operand2:=v.regfile(to_integer(r.d.inst_info.rt));
         end if;
         v.ex.result:=alu(v.ex.operand1,v.ex.operand2,r.d.inst_info.alu);
-        v.ex.BranchTaken:=IsBranch(r.regfile(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
-        if v.ex.inst_info.mem_re or v.ex.inst_info.mem_we then
+        v.ex.BranchTaken:=IsBranch(v.regfile(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
+
+        if v.ex.inst_info.mem_re or v.ex.inst_info.mem_we then  --memory 入出力
           v.ex.mem_addr:=unsigned(
-            signed(r.regfile(to_integer(r.d.inst_info.rs)))+
+            signed(v.regfile(to_integer(r.d.inst_info.rs)))+
             resize(signed(r.d.inst_info.immediate),32));
         else
           v.ex.mem_addr:=(others=>'0');
+        end if;
+
+        if v.ex.inst_info.IO_we then
+          v.ex.io_data:=v.ex.operand1;
         end if;
         --************************D***********************
         v.D.PC:=r.F.PC;
@@ -261,7 +266,7 @@ begin
         if v.d.inst_info.isImmediate then
           v.d.jmp_addr:=resize(v.d.inst_info.immediate,32);
         else
-          v.d.jmp_addr:=r.regfile(to_integer(v.d.inst_info.rt));
+          v.d.jmp_addr:=v.regfile(to_integer(v.d.inst_info.rt));
         end if;
         --************************F***********************
         --decide next F

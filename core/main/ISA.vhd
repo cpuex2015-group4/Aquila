@@ -3,7 +3,7 @@
 --Yuki Imai
 --Tue Dec 15 22:55:50 2015
 
-  library ieee;
+library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library work;
@@ -186,71 +186,80 @@ package body ISA is
     info.Mem_WE:=(info.format=RI) and opt=opt_mem and bit_image=OP_ST;
     info.Mem_RE:=(info.format=RI) and opt=opt_mem and bit_image=OP_LD;
     if info.Mem_RE then
+      info.reg_we:=true;
       info.data_src:=from_Mem;
     end if;
     info.IO_WE:=(info.format=X) and info.funct= OP_OUT;
     info.IO_RE:=(info.format=X) and info.funct=OP_IN;
     if info.IO_RE then
+      info.reg_we:=true;
       info.data_src:=from_IO;
-      case info.format is
-        when X=>
-          case info.funct is
-            when OP_ITOF=>
-              info.ALU:=ALU_itof;
-              info.data_src:=from_fpu;
-            when OP_FTOI=>
-              info.ALU:=ALU_ftoi;
-              info.data_src:=from_fpu;
+    end if;
+    case info.format is
+      when X=>
+        case info.funct is
+          when OP_ITOF=>
+            info.ALU:=ALU_itof;
+            info.data_src:=from_fpu;
+          when OP_FTOI=>
+            info.ALU:=ALU_ftoi;
+            info.data_src:=from_fpu;
+          when others=>
+            info.ALU:=ALU_NOP;
+        end case;
+      when B=>
+        info.ALU:=ALU_NOP;
+      when RI=>
+        if opt=opt_shiftinvsqrt and not(info.fromFPR) then
+          info.reg_we:=true;
+          case bit_image is
+            when OP_SLL =>
+              info.ALU:=ALU_SLL;
+            when OP_SRL =>
+              info.ALU:=ALU_SRL;
             when others=>
               info.ALU:=ALU_NOP;
           end case;
-        when B=>
-          info.ALU:=ALU_NOP;
-        when RI=>
-          if opt=opt_shiftinvsqrt and not(info.fromFPR) then
+        else
+          if info.fromFPR then
+            info.data_src:=from_fpu;
             case bit_image is
-              when OP_SLL =>
-                info.ALU:=ALU_SLL;
-              when OP_SRL =>
-                info.ALU:=ALU_SRL;
+              when OP_ADD =>
+                info.reg_we:=true;
+                info.ALU:=ALU_FADD;
+              when OP_SUB =>
+                                info.reg_we:=true;
+                info.ALU:=ALU_FSUB;
+              when OP_MUL =>
+                                info.reg_we:=true;
+                info.ALU:=ALU_FMUL;
+              when OP_DIV =>
+                                info.reg_we:=true;
+                info.ALU:=ALU_FDIV;
               when others=>
                 info.ALU:=ALU_NOP;
             end case;
           else
-            if info.fromFPR then
-              info.data_src:=from_fpu;
-              case bit_image is
-                when OP_ADD =>
-                  info.ALU:=ALU_FADD;
-                when OP_SUB =>
-                  info.ALU:=ALU_FSUB;
-                when OP_MUL =>
-                  info.ALU:=ALU_FMUL;
-                when OP_DIV =>
-                  info.ALU:=ALU_FDIV;
-                when others=>
-                  info.ALU:=ALU_NOP;
-              end case;
-            else
-              case bit_image is
-                when OP_ADD=>
-                  info.ALU:=ALU_ADD;
-                when OP_SUB =>
-                  info.ALU:=ALU_SUB;
-                when OP_JJAL =>
-                  info.isJMP:=true;
-                  info.isImmediate:=true;
-                  info.isLNK:=(opt=jopt_link);
-                when OP_JRJRAL=>
-                  info.isJMP:=true;
-                  info.islnk:=(opt=jopt_link);
-                when others=>
-                  info.ALU:=ALU_NOP;
-              end case;
-            end if;
+            case bit_image is
+              when OP_ADD=>
+                                info.reg_we:=true;
+                info.ALU:=ALU_ADD;
+              when OP_SUB =>
+                                info.reg_we:=true;
+                info.ALU:=ALU_SUB;
+              when OP_JJAL =>
+                info.isJMP:=true;
+                info.isImmediate:=true;
+                info.isLNK:=(opt=jopt_link);
+              when OP_JRJRAL=>
+                info.isJMP:=true;
+                info.islnk:=(opt=jopt_link);
+              when others=>
+                info.ALU:=ALU_NOP;
+            end case;
           end if;
-      end case;
-    end if;
+        end if;
+    end case;
     return info;
   end decode;
 
