@@ -1,6 +1,6 @@
-   --main.vhd
-   --IS.S Imai Yuki
-   --Tue Dec 15 13:16:45 2015
+--main.vhd
+--IS.S Imai Yuki
+--Tue Dec 15 13:16:45 2015
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -73,25 +73,25 @@ entity main is
     clk,rst:in  std_logic;
     port_in       :in  main_in_type;
     port_out      :out main_out_type
-  );
+    );
 end main;
 
 architecture twoproc of main is
   --component
   component fpu
-  port(
-    clk,rst:in  std_logic;
-    port_in       :in  fpu_in_type;
-    port_out      :out fpu_out_type
-  );
+    port(
+      clk,rst:in  std_logic;
+      port_in       :in  fpu_in_type;
+      port_out      :out fpu_out_type
+      );
   end component;
 
   component staller
-  port(
-    clk,rst:in  std_logic;
-    port_in       :in  staller_in_type;
-    port_out      :out staller_out_type
-  );
+    port(
+      clk,rst:in  std_logic;
+      port_in       :in  staller_in_type;
+      port_out      :out staller_out_type
+      );
   end component;
 
   --types and constants
@@ -106,54 +106,56 @@ architecture twoproc of main is
   end record;
   constant Fetch_reg_init:Fetch_reg_t:=(
     PC=>(others=>'X')
-  );
+    );
 
   type Decode_reg_t is record
     PC:word;
     inst_info:inst_info_type;
     jmp_addr:word;
   end record;
-    constant Decode_reg_init:Decode_reg_t:=(
-      PC=>(others=>'X'),
-      inst_info=>inst_info_init,
-      JMP_ADDR=>(others=>'X')
-  );
-    type Exe_reg_t is record
-      PC:word;
-      inst_info:inst_info_type;
-      BranchTaken:boolean;
-      operand1:word;
-      operand2:word;
-      Mem_addr:word;
-      Mem_data:word;
-		IO_data:word;
-      result:word;
-    end record;
-    constant Exe_reg_init:Exe_reg_t:=(
+  constant Decode_reg_init:Decode_reg_t:=(
+    PC=>(others=>'X'),
+    inst_info=>inst_info_init,
+    JMP_ADDR=>(others=>'X')
+    );
+  type Exe_reg_t is record
+    PC:word;
+    inst_info:inst_info_type;
+    BranchTaken:boolean;
+    Branch_addr:word;
+    operand1:word;
+    operand2:word;
+    Mem_addr:word;
+    Mem_data:word;
+    IO_data:word;
+    result:word;
+  end record;
+  constant Exe_reg_init:Exe_reg_t:=(
     PC=>(others=>'X'),
     inst_info=>inst_info_init, 
     BranchTaken=>false,
+    branch_addr=>(others=>'X'),
     result=>(others=>'X'),
     operand1=>(others=>'X'),
     operand2=>(others=>'X'),
     Mem_addr=>(others=>'0'),
-	 IO_data=>(others=>'X'),
+    IO_data=>(others=>'X'),
     Mem_data=>(others=>'X')
-  );
+    );
   type WB_reg_t is record
     PC:word;
-	 inst_info:inst_info_type;
+    inst_info:inst_info_type;
     Is_Ex_Mem_data_saved:boolean;  --stallでタイミングが狂った時に必要。高々一つ確保しておけば問題なし。
     Ex_Mem_data:word;
     result:word;
   end record;
-    constant WB_reg_init:WB_reg_t:=(
+  constant WB_reg_init:WB_reg_t:=(
     PC=>(others=>'X'),
-	 inst_info=>inst_info_init,
+    inst_info=>inst_info_init,
     Is_Ex_Mem_data_saved=>false,
     Ex_Mem_data=>(others=>'X'),
     result=>(others=>'X')
-  );
+    );
 
   type reg_type is record
     state:state_type;
@@ -241,12 +243,22 @@ begin
         v.EX.inst_info:=r.d.inst_info;
         v.ex.operand1:=v.regfile(to_integer(r.d.inst_info.rs)); --ココらへんはそのうちforwarderに投げる
         if r.d.inst_info.isImmediate then
-         v.ex.operand2:=resize(r.d.inst_info.immediate,32);
+          v.ex.operand2:=resize(r.d.inst_info.immediate,32);
         else
           v.ex.operand2:=v.regfile(to_integer(r.d.inst_info.rt));
         end if;
         v.ex.result:=alu(v.ex.operand1,v.ex.operand2,r.d.inst_info.alu);
+
+        --分岐方向を確定させる
         v.ex.BranchTaken:=IsBranch(v.regfile(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
+        if v.ex.BranchTaken then
+          v.ex.branch_addr:=unsigned(
+            signed(v.ex.PC)+
+            resize(signed(v.ex.inst_info.immediate),32)
+            );
+        else
+          v.ex.branch_addr:=(others=>'X');
+        end if;
 
         if v.ex.inst_info.mem_re or v.ex.inst_info.mem_we then  --memory 入出力
           v.ex.mem_addr:=unsigned(
@@ -260,8 +272,16 @@ begin
           v.ex.io_data:=v.ex.operand1;
         end if;
         --************************D***********************
-        v.D.PC:=r.F.PC;
-        v.D.inst_info:=Decode(port_in.instruction);
+        --この stage は分岐予測の失敗で潰れうる
+        if v.ex.BranchTaken then
+          --分岐が成立時
+          --予測失敗しているのでこのステージをNOPに差し替える。
+          v.D.PC:=(others=>'X');
+          v.D.inst_info:=inst_nop;
+        else--非分岐。予測成功。
+          v.D.PC:=r.F.PC;
+          v.D.inst_info:=Decode(port_in.instruction);
+        end if;
         if v.d.inst_info.isImmediate then
           v.d.jmp_addr:=resize(v.d.inst_info.immediate,32);
         else
@@ -272,6 +292,8 @@ begin
 
         if v.D.inst_info.isJMP then
           v.F.PC:=v.d.jmp_addr;
+        elsif v.Ex.BranchTaken then
+          v.F.PC:=v.ex.branch_addr;
         else
           v.F.PC:=r.F.PC+1;
         end if;
@@ -282,7 +304,7 @@ begin
       when hlt=>
     end case;
 
-   --######################## Out and rin######################
+    --######################## Out and rin######################
 
     --output and update
     rin.state<=v.state;
