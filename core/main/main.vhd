@@ -221,14 +221,13 @@ begin
         --resultを決定する
         case v.wb.inst_info.data_src is
           when from_alu=>
-            v.ex.result:=r.ex.result;
+            v.wb.result:=r.ex.result;
           when from_fpu=>
           when from_mem=>
-            v.ex.result:=port_in.mem_data;
+            v.wb.result:=port_in.mem_data;
           when from_IO=>
-            v.ex.result:=port_in.IO_data;
+            v.wb.result:=port_in.IO_data;
         end case;
-        v.wb.result:=r.ex.result;
 
         if r.ex.inst_info.reg_we then
           v.regfile(to_integer(r.ex.inst_info.rd)):=v.wb.result;
@@ -271,7 +270,7 @@ begin
         --************************F***********************
         --decide next F
 
-        if r.D.inst_info.isJMP then
+        if v.D.inst_info.isJMP then
           v.F.PC:=v.d.jmp_addr;
         else
           v.F.PC:=r.F.PC+1;
