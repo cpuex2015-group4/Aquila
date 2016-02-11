@@ -248,9 +248,13 @@ begin
         end if;
         v.ex.result:=alu(v.ex.operand1,v.ex.operand2,r.d.inst_info.alu);
         v.ex.BranchTaken:=IsBranch(r.regfile(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
-        v.ex.mem_addr:=unsigned(
-          signed(r.regfile(to_integer(r.d.inst_info.rs)))+
-          resize(signed(r.d.inst_info.immediate),32));
+        if v.ex.inst_info.mem_re or v.ex.inst_info.mem_we then
+          v.ex.mem_addr:=unsigned(
+            signed(r.regfile(to_integer(r.d.inst_info.rs)))+
+            resize(signed(r.d.inst_info.immediate),32));
+        else
+          v.ex.mem_addr:=(others=>'0');
+        end if;
         --************************D***********************
         v.D.PC:=r.F.PC;
         v.D.inst_info:=Decode(port_in.instruction);
@@ -277,6 +281,8 @@ begin
    --######################## Out and rin######################
 
     --output and update
+    rin.state<=v.state;
+    rin.clk_count<=v.clk_count;
     --from stage-F
     if stall_out.f_stall then
       rin.F<=r.F;
