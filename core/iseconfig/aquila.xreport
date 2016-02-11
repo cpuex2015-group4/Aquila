@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <report-views version="2.0" >
  <header>
-  <DateModified>2016-02-11T15:40:37</DateModified>
+  <DateModified>2016-02-12T02:13:42</DateModified>
   <ModuleName>aquila</ModuleName>
-  <SummaryTimeStamp>2016-01-05T11:22:21</SummaryTimeStamp>
+  <SummaryTimeStamp>2016-02-12T02:06:16</SummaryTimeStamp>
   <SavedFilePath>/home/yukiimai/Sandbox/2015_winter/Aquila/core/iseconfig/aquila.xreport</SavedFilePath>
   <ImplementationReportsDirectory>/home/yukiimai/Sandbox/2015_winter/Aquila/core/working/</ImplementationReportsDirectory>
   <DateInitialized>2015-12-24T17:05:26</DateInitialized>

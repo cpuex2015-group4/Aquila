@@ -33,6 +33,8 @@ package global_types is
   constant INST_ADDR_MAX:INST_ADDR_TYPE:=(others=>'1');
   constant SRAM_ADDR_MAX:SRAM_ADDR_TYPE:=(others=>'1');
   constant USER_SECTION_OFFSET:SRAM_ADDR_TYPE:=x"00400";
+  constant DATA_SECTION_OFFSET:sram_addr_type:=x"07F00";
+  constant HEAP_SECTION_OFFSET:sram_addr_type:=x"10000";
   constant IO_section_time:time:=to_integer(unsigned(IO_section))*CLK_LENGTH;
 
   type init_information_type is record
