@@ -80,10 +80,12 @@ architecture twoproc of fpu is
   type reg_type is record
     state:state_type;
     output:fpu_out_type;
+    ex_input:fpu_in_type;
   end record;
   constant r_init:reg_type :=(
     state=>init,
-    output=>fpu_out_init
+    output=>fpu_out_init,
+    ex_input=>fpu_in_init
     );
   signal r,rin:reg_type:=r_init;
   type result_type is record
@@ -119,6 +121,12 @@ begin
                     unsigned(result.f2i) when alu_ftoi,
                     unsigned(result.i2f) when alu_itof,
                     port_in.operand1 when others;
+
+  proc:process(r,port_in)
+  begin
+    rin.ex_input<=port_in;
+    port_out.data_ready<=(port_in=r.ex_input);
+  end process;
 
   regs:process(clk,rst)
   begin

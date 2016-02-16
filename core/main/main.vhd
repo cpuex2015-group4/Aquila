@@ -222,9 +222,8 @@ begin
 
         --resultを決定する
         case v.wb.inst_info.data_src is
-          when from_alu=>
+          when from_alu|from_fpu=>
             v.wb.result:=r.ex.result;
-          when from_fpu=>
           when from_mem=>
             v.wb.result:=port_in.mem_data;
           when from_IO=>
@@ -236,12 +235,13 @@ begin
         end if;
 
         if r.ex.inst_info.isLNK then
-          v.regfile(to_integer(reg_link)):=r.ex.PC+1;
+          v.regfile(reg_link):=r.ex.PC+1;
         end if;
         --************************Ex**********************
 
         --hazzard check
-        stall_in.ex_hazzard<=false;
+        stall_in.ex_hazzard<=(r.d.inst_info.data_src=from_fpu)and
+                              not fpu_output.data_ready;
         --/hazzard check 終わり
         v.Ex.PC:=r.D.PC;
         v.EX.inst_info:=r.d.inst_info;
@@ -251,7 +251,14 @@ begin
         else
           v.ex.operand2:=v.regfile(to_integer(r.d.inst_info.rt));
         end if;
-        v.ex.result:=alu(v.ex.operand1,v.ex.operand2,r.d.inst_info.alu);
+        case r.d.inst_info.data_src is
+          when from_alu=>
+            v.ex.result:=alu(v.ex.operand1,v.ex.operand2,r.d.inst_info.alu);
+          when from_fpu=>
+            v.ex.result:=fpu_output.result;
+          when others=>
+            v.ex.result:=(others=>'-');
+        end case;
 
         --分岐方向を確定させる
         v.ex.BranchTaken:=IsBranch(v.regfile(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
@@ -346,6 +353,10 @@ begin
       port_out.IO_data<=v.ex.IO_data;
       port_out.IO_RE<=v.ex.inst_info.IO_re;
       port_out.IO_WE<=v.ex.inst_info.IO_we;
+
+      fpu_input.alu_control<=v.ex.inst_info.alu;
+      fpu_input.operand1<=v.ex.operand1;
+      fpu_input.operand2<=v.ex.operand2;
     end if;
     --from stage-Wb
     if stall_out.wb_stall then
