@@ -355,8 +355,13 @@ begin
       port_out.IO_WE<=v.ex.inst_info.IO_we;
 
       fpu_input.alu_control<=v.ex.inst_info.alu;
-      fpu_input.operand1<=v.ex.operand1;
-      fpu_input.operand2<=v.ex.operand2;
+      if v.ex.inst_info.data_src=from_fpu then
+        fpu_input.operand1<=v.ex.operand1;
+        fpu_input.operand2<=v.ex.operand2;
+      else
+        fpu_input.operand1<=(others=>'0');
+        fpu_input.operand2<=(others=>'0');
+      end if;
     end if;
     --from stage-Wb
     if stall_out.wb_stall then

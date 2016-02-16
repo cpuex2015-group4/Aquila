@@ -6,8 +6,7 @@ one:
 _leml_entry:
 	addi %r4,%r0,$10
 	add.s %f1,%f0,%f0
-	addi %r5,%r0,one
-	ld.s %f2,(%r5)
+	ld.s %f2,%r0,one
 loop:
 	beq %r0,%r4,loop_end
 	add.s %f3,%f0,%f1
