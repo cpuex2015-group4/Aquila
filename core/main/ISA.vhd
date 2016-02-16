@@ -70,7 +70,7 @@ package ISA is
 
 -----------------------registers------------------------
   constant reg_rv:integer:=3;
-  constant reg_ra:integer:=4;
+  constant reg_link:integer:=4;
   constant reg_heap:integer:=5;
   constant reg_closure:integer:=6;
   constant reg_stack:integer:=7;

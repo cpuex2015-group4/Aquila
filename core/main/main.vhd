@@ -234,6 +234,10 @@ begin
         if r.ex.inst_info.reg_we then
           v.regfile(to_integer(r.ex.inst_info.rd)):=v.wb.result;
         end if;
+
+        if r.ex.inst_info.isLNK then
+          v.regfile(to_integer(reg_link)):=r.ex.PC+1;
+        end if;
         --************************Ex**********************
 
         --hazzard check
