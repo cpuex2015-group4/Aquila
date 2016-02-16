@@ -313,6 +313,7 @@ begin
         v.regfile(0):=(others=>'0');
         v.fregfile(0):=(others=>'0');
       when hlt=>
+        report "hlt" severity failure;
     end case;
 
     --######################## Out and rin######################
