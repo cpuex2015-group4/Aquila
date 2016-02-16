@@ -61,7 +61,6 @@ package ISA is
   constant OP_MUL:bit_image_type:=to_unsigned(2,BRI_bit_image_size);
   constant OP_DIV:bit_image_type:=to_unsigned(3,BRI_bit_image_size);
   constant OP_JJAL:bit_image_type:=to_unsigned(2,BRI_bit_image_size);
-  constant OP_JRJRAL:bit_image_type:=to_unsigned(3,BRI_bit_image_size);
   constant OP_LD:bit_image_type:=to_unsigned(0,BRI_bit_image_size);
   constant OP_ST:bit_image_type:=to_unsigned(1,BRI_bit_image_size);
   constant OP_SLL:bit_image_type:=to_unsigned(2,BRI_bit_image_size);
@@ -228,13 +227,13 @@ package body ISA is
                 info.reg_we:=true;
                 info.ALU:=ALU_FADD;
               when OP_SUB =>
-                                info.reg_we:=true;
+                info.reg_we:=true;
                 info.ALU:=ALU_FSUB;
               when OP_MUL =>
-                                info.reg_we:=true;
+                info.reg_we:=true;
                 info.ALU:=ALU_FMUL;
               when OP_DIV =>
-                                info.reg_we:=true;
+                info.reg_we:=true;
                 info.ALU:=ALU_FDIV;
               when others=>
                 info.ALU:=ALU_NOP;
@@ -242,18 +241,14 @@ package body ISA is
           else
             case bit_image is
               when OP_ADD=>
-                                info.reg_we:=true;
+                info.reg_we:=true;
                 info.ALU:=ALU_ADD;
               when OP_SUB =>
-                                info.reg_we:=true;
+                info.reg_we:=true;
                 info.ALU:=ALU_SUB;
               when OP_JJAL =>
                 info.isJMP:=true;
-                info.isImmediate:=true;
                 info.isLNK:=(opt=jopt_link);
-              when OP_JRJRAL=>
-                info.isJMP:=true;
-                info.islnk:=(opt=jopt_link);
               when others=>
                 info.ALU:=ALU_NOP;
             end case;
