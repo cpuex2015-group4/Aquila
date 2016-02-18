@@ -221,7 +221,9 @@ package body ISA is
           end case;
         else
           if info.fromFPR then
-            info.data_src:=from_fpu;
+            if not (info.mem_re or info.mem_we) then
+              info.data_src:=from_fpu;
+            end if;
             case bit_image is
               when OP_ADD =>
                 info.reg_we:=true;

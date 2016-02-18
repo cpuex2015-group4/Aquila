@@ -187,6 +187,7 @@ begin
   STALLER_unit:staller port map(clk,rst,stall_in,stall_out);
   comb:process(r,port_in,fpu_output,stall_out)
     variable v:reg_type;
+    variable src_reg:reg_file_t; --used in 'EX' stage
   begin
     v:=r;
     --########################main logic########################
@@ -208,6 +209,7 @@ begin
         if r.ex.inst_info.hlt then
           v.state:=hlt;
         end if;
+        v.wb.PC:=r.ex.pc;
 
         --hazard chcek
         if (port_in.IO_empty and r.ex.inst_info.IO_RE) or
@@ -231,7 +233,11 @@ begin
         end case;
 
         if r.ex.inst_info.reg_we then
-          v.regfile(to_integer(r.ex.inst_info.rd)):=v.wb.result;
+          if v.wb.inst_info.toFPR then
+            v.fregfile(to_integer(r.ex.inst_info.rd)):=v.wb.result;
+          else
+            v.regfile(to_integer(r.ex.inst_info.rd)):=v.wb.result;
+          end if;
         end if;
 
         if r.ex.inst_info.isLNK then
@@ -245,11 +251,17 @@ begin
         --/hazzard check 終わり
         v.Ex.PC:=r.D.PC;
         v.EX.inst_info:=r.d.inst_info;
-        v.ex.operand1:=v.regfile(to_integer(r.d.inst_info.rs)); --ココらへんはそのうちforwarderに投げる
+        if v.ex.inst_info.fromFPR then
+          src_reg:=v.fregfile;
+        else
+          src_reg:=v.regfile;
+        end if;
+
+        v.ex.operand1:=src_reg(to_integer(r.d.inst_info.rs)); --ココらへんはそのうちforwarderに投げる
         if r.d.inst_info.isImmediate then
           v.ex.operand2:=resize(r.d.inst_info.immediate,32);
         else
-          v.ex.operand2:=v.regfile(to_integer(r.d.inst_info.rt));
+          v.ex.operand2:=src_reg(to_integer(r.d.inst_info.rt));
         end if;
         case r.d.inst_info.data_src is
           when from_alu=>
@@ -261,7 +273,7 @@ begin
         end case;
 
         --分岐方向を確定させる
-        v.ex.BranchTaken:=IsBranch(v.regfile(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
+        v.ex.BranchTaken:=IsBranch(src_reg(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
         if v.ex.BranchTaken then
           v.ex.branch_addr:=unsigned(
             signed(v.ex.PC)+
@@ -345,6 +357,9 @@ begin
       port_out.IO_data<=(others=>'X');
       port_out.IO_RE<=false;
       port_out.IO_WE<=false;
+      fpu_input.alu_control<=alu_nop;
+      fpu_input.operand1<=(others=>'0');
+      fpu_input.operand2<=(others=>'0');
     else
       rin.Ex<=v.Ex;
       port_out.Mem_addr<=resize(v.ex.mem_addr,20);
@@ -355,11 +370,12 @@ begin
       port_out.IO_RE<=v.ex.inst_info.IO_re;
       port_out.IO_WE<=v.ex.inst_info.IO_we;
 
-      fpu_input.alu_control<=v.ex.inst_info.alu;
       if v.ex.inst_info.data_src=from_fpu then
+        fpu_input.alu_control<=v.ex.inst_info.alu;
         fpu_input.operand1<=v.ex.operand1;
         fpu_input.operand2<=v.ex.operand2;
       else
+        fpu_input.alu_control<=alu_nop;
         fpu_input.operand1<=(others=>'0');
         fpu_input.operand2<=(others=>'0');
       end if;
@@ -368,9 +384,11 @@ begin
     if stall_out.wb_stall then
       rin.Wb<=r.Wb;
       rin.regfile<=r.regfile;
+      rin.fregfile<=r.fregfile;
     else
       rin.Wb<=v.Wb;
       rin.regfile<=v.regfile;
+      rin.fregfile<=v.fregfile;
     end if;
   end process;
 
