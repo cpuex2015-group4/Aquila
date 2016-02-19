@@ -118,10 +118,10 @@ begin
 									 (expo = "10010011" and mant(0)           /=                       '0') else
 					 '0';
 
-	output <= sign & into(33 downto 2)
+	output <= sign & into(32 downto 2)
 							when into(1) = '0' or (into(2) = '0' and into(0) = '0' and stic = '0') else
-						sign & into(33 downto 2) + 1;
-	flag   <= into(34) & "1"
+						sign & into(32 downto 2) + 1;
+	flag   <= into(33) & "1"
 							when into(33 downto 2) = "00000000000000000000000000000000" and (into(1 downto 0) /= "00" or stic = '1') else
-						into(34) & "0"
+						into(33) & "0"
 end struct;
