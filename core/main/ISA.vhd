@@ -1,3 +1,4 @@
+
 --ISA.vhd
 --Yuki Imai
 --Tue Dec 15 22:55:50 2015
@@ -60,7 +61,6 @@ package ISA is
   constant OP_MUL:bit_image_type:=to_unsigned(2,BRI_bit_image_size);
   constant OP_DIV:bit_image_type:=to_unsigned(3,BRI_bit_image_size);
   constant OP_JJAL:bit_image_type:=to_unsigned(2,BRI_bit_image_size);
-  constant OP_JRJRAL:bit_image_type:=to_unsigned(3,BRI_bit_image_size);
   constant OP_LD:bit_image_type:=to_unsigned(0,BRI_bit_image_size);
   constant OP_ST:bit_image_type:=to_unsigned(1,BRI_bit_image_size);
   constant OP_SLL:bit_image_type:=to_unsigned(2,BRI_bit_image_size);
@@ -70,7 +70,7 @@ package ISA is
 
 -----------------------registers------------------------
   constant reg_rv:integer:=3;
-  constant reg_ra:integer:=4;
+  constant reg_link:integer:=4;
   constant reg_heap:integer:=5;
   constant reg_closure:integer:=6;
   constant reg_stack:integer:=7;
@@ -80,17 +80,18 @@ package ISA is
   type ALU_control_type is
     (alu_nop,alu_itof,alu_ftoi,
      alu_add,alu_fadd,alu_sub,alu_fsub,alu_fmul,alu_fdiv,alu_sll,alu_srl,alu_finv,alu_fsqrt);
-  type data_src_type is (from_alu,from_fpu,from_MEM);
+  type data_src_type is (from_alu,from_fpu,from_MEM,from_io);
   type B_type is (B_BEQ,B_BLT,B_BLE,B_NOBRANCH);
   type inst_info_type is record
     format:format_type;
     OPecode:ope_type;
     opt:opt_type;
     isImmediate:boolean;
-    isFPR:boolean;
+    fromFPR:boolean;
+    toFPR:boolean;
     isJMP:boolean;
     isLNK:boolean;
-    Branch:B_type;
+    Branch:B_type; 
     MEM_WE:boolean;
     MEM_RE:boolean;
     IO_WE:boolean;
@@ -111,7 +112,8 @@ package ISA is
     OPecode=>(others=>'X'),
     opt=>(others=>'X'),
     isImmediate=>false,
-    isFPR=>false,
+    fromFPR=>false,
+    toFPR=>false,
     isJMP=>false,
     isLNK=>false,
     Branch=>B_NOBRANCH,
@@ -129,8 +131,9 @@ package ISA is
     ALU=>ALU_NOP,
     HLT=>false
     );
-
+  constant inst_nop:inst_info_type:=inst_info_init;
   function Decode(inst:word) return inst_info_type;
+  function IsBranch(operand1:word;operand2:word;B:B_type) return boolean;
 end package;
 
 package body ISA is
@@ -151,7 +154,8 @@ package body ISA is
     info.immediate:=inst(15 downto 0);
     opt:=inst(29 downto 28);
     info.isImmediate:=to_boolean(inst(31));
-    info.isFPR:=to_boolean(inst(30));
+    info.fromFPR:=to_boolean(inst(30));
+    info.toFPR:=to_boolean(inst(30));
     if inst(31)='1' then
       info.format:=RI;
     elsif info.Opecode=0 and inst(0)='0' then
@@ -181,11 +185,15 @@ package body ISA is
     info.Mem_WE:=(info.format=RI) and opt=opt_mem and bit_image=OP_ST;
     info.Mem_RE:=(info.format=RI) and opt=opt_mem and bit_image=OP_LD;
     if info.Mem_RE then
+      info.reg_we:=true;
       info.data_src:=from_Mem;
     end if;
     info.IO_WE:=(info.format=X) and info.funct= OP_OUT;
     info.IO_RE:=(info.format=X) and info.funct=OP_IN;
-
+    if info.IO_RE then
+      info.reg_we:=true;
+      info.data_src:=from_IO;
+    end if;
     case info.format is
       when X=>
         case info.funct is
@@ -201,7 +209,8 @@ package body ISA is
       when B=>
         info.ALU:=ALU_NOP;
       when RI=>
-        if opt=opt_shiftinvsqrt and not(info.isFPR) then
+        if opt=opt_shiftinvsqrt and not(info.fromFPR) then
+          info.reg_we:=true;
           case bit_image is
             when OP_SLL =>
               info.ALU:=ALU_SLL;
@@ -211,16 +220,22 @@ package body ISA is
               info.ALU:=ALU_NOP;
           end case;
         else
-          if info.isFPR then
-            info.data_src:=from_fpu;
+          if info.fromFPR then
+            if not (info.mem_re or info.mem_we) then
+              info.data_src:=from_fpu;
+            end if;
             case bit_image is
               when OP_ADD =>
+                info.reg_we:=true;
                 info.ALU:=ALU_FADD;
               when OP_SUB =>
+                info.reg_we:=true;
                 info.ALU:=ALU_FSUB;
               when OP_MUL =>
+                info.reg_we:=true;
                 info.ALU:=ALU_FMUL;
               when OP_DIV =>
+                info.reg_we:=true;
                 info.ALU:=ALU_FDIV;
               when others=>
                 info.ALU:=ALU_NOP;
@@ -228,23 +243,28 @@ package body ISA is
           else
             case bit_image is
               when OP_ADD=>
+                info.reg_we:=true;
                 info.ALU:=ALU_ADD;
               when OP_SUB =>
+                info.reg_we:=true;
                 info.ALU:=ALU_SUB;
-             when OP_JJAL =>
+              when OP_JJAL =>
                 info.isJMP:=true;
-                info.isImmediate:=true;
                 info.isLNK:=(opt=jopt_link);
-              when OP_JRJRAL=>
-                info.isJMP:=true;
-                info.islnk:=(opt=jopt_link);					 
               when others=>
                 info.ALU:=ALU_NOP;
             end case;
           end if;
         end if;
     end case;
-
     return info;
+  end decode;
+
+  function IsBranch(operand1:word;operand2:word;B:B_type) return boolean is
+  begin
+    return
+      (signed(operand1)<signed(operand2) and B=B_BLT) or
+      (signed(operand1)<=signed(operand2) and B=B_BLE) or
+      (signed(operand1)=signed(operand2) and B=B_BEQ);
   end function;
 end ISA;

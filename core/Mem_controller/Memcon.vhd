@@ -1,6 +1,6 @@
-   --Memcon.vhd
-   --IS.S 05-151007 Yuki Imai
-   --Mon Dec  7 18:50:39 2015
+--Memcon.vhd
+--IS.S 05-151007 Yuki Imai
+--Mon Dec  7 18:50:39 2015
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -16,71 +16,67 @@ entity Memcon is
     Memcon_in:          in      Memcon_in_type;
     Memcon_out:         out     Memcon_out_type;
     SRAM_ZD:           inout    std_logic_vector(31 downto 0)
-  );
+    );
 end Memcon;
 
 architecture twoproc of Memcon is
   --types and constants
-  type snapshot is record
-    WE:boolean;
-    RE:boolean;
-    ADDR:SRAM_addr_type;
-    DATA:word;
+
+  type snap_type is record
+    input:word;
+    re:boolean;
+    we:boolean;
   end record;
-  constant snapshot_init:snapshot:=(
-    WE=>false,
-    RE=>false,
-    ADDR=>(others=>'0'),
-    DATA=>(others=>'0')
-	 );
+  constant snap_init:snap_type:=(
+    input=>(others=>'X'),
+    re=>false,
+    we=>false
+  );
 
-  type snaps_type is array(0 to wait_clks-1) of snapshot;
-  constant snaps_init:snaps_type:=(others=>snapshot_init);
-
+  type snaps_type is array(0 to 2) of snap_type;
   type reg_type is record
     snaps:snaps_type;
     data_from_sram:word; -- sram kara no data ha ikkai kokoni uketekara tukau
     hit:boolean;
   end record;
   constant r_init:reg_type :=(
-	snaps=>snaps_init,
-	data_from_sram =>	(others=>'0'),
-	hit =>false
-	);
+    snaps=>(others=>snap_init),
+    data_from_sram =>	(others=>'0'),
+    hit =>false
+    );
 
   signal r,rin:reg_type:=r_init;
 begin
   comb:process(r,Memcon_in,SRAM_ZD)
-   variable v:reg_type;
+    variable v:reg_type;
   begin
     v:=r;
-    --########################main logic########################
-    v.snaps(0).WE:=Memcon_in.WE;
-    v.snaps(0).RE:=Memcon_in.RE;
-    v.snaps(0).ADDR:=MEMCON_IN.ADDR;
-    if memcon_in.we then
-      v.snaps(0).DATA:=Memcon_in.input;
-    else
-      v.snaps(0).data:=(others=>'-');
-    end if;
-    for i in 0 to wait_clks-2 loop
-      v.snaps(i+1):=r.snaps(i);
-    end loop;
+    v.snaps(0).input:=memcon_in.input;
+    v.snaps(0).re:=memcon_in.re;
+    v.snaps(0).we:=memcon_in.we;
+    v.snaps(1):=r.snaps(0);
+    v.snaps(2):=r.snaps(1);
 
-    v.hit:=r.snaps(wait_clks-1).re;
-    if not r.snaps(wait_clks-1).we then
+    if r.snaps(1).re then
       v.data_from_sram:=unsigned(sram_zd);
-      sram_zd<=(others=>'Z');
     else
-      sram_zd<=std_logic_vector(r.snaps(wait_clks-1).data);
-      v.data_from_sram:=(others=>'-');
+      v.data_from_sram:=(others=>'X');
     end if;
-    rin<=v;
-    memcon_out.sram_addr<=memcon_in.addr;
-    memcon_out.sram_xwa<=not memcon_in.we;
-    memcon_out.hit<=r.hit;
+    --###################outputs
     memcon_out.output<=r.data_from_sram;
-
+    memcon_out.hit<=r.snaps(2).re;
+    if memcon_in.re or memcon_in.we then
+      memcon_out.sram_addr<=memcon_in.addr;
+    else
+      memcon_out.sram_addr<=(others=>'0');
+    end if;
+    if r.snaps(1).we then
+      sram_zd<=std_logic_vector(r.snaps(1).input);
+    else
+      sram_zd<=(others=>'Z');
+    end if;
+    memcon_out.sram_xwa<=not memcon_in.we;
+    rin<=v;
   end process;
 
   regs:process(clk,rst)

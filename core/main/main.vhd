@@ -1,6 +1,6 @@
-   --main.vhd
-   --IS.S Imai Yuki
-   --Tue Dec 15 13:16:45 2015
+--main.vhd
+--IS.S Imai Yuki
+--Tue Dec 15 13:16:45 2015
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -8,6 +8,7 @@ use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
 use work.ISA.all;
+use work.staller_interface.all;
 use work.alu_package.all;
 use work.fpu_interface.all;
 
@@ -62,6 +63,7 @@ use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
 use work.main_interface.all;
+use work.staller_interface.all;
 use work.ISA.all;
 use work.alu_package.all;
 use work.fpu_interface.all;
@@ -71,17 +73,25 @@ entity main is
     clk,rst:in  std_logic;
     port_in       :in  main_in_type;
     port_out      :out main_out_type
-  );
+    );
 end main;
 
 architecture twoproc of main is
   --component
   component fpu
-  port(
-    clk,rst:in  std_logic;
-    port_in       :in  fpu_in_type;
-    port_out      :out fpu_out_type
-  );
+    port(
+      clk,rst:in  std_logic;
+      port_in       :in  fpu_in_type;
+      port_out      :out fpu_out_type
+      );
+  end component;
+
+  component staller
+    port(
+      clk,rst:in  std_logic;
+      port_in       :in  staller_in_type;
+      port_out      :out staller_out_type
+      );
   end component;
 
   --types and constants
@@ -93,81 +103,72 @@ architecture twoproc of main is
 
   type Fetch_reg_t is record
     PC:word;
-    NOP:boolean;
   end record;
   constant Fetch_reg_init:Fetch_reg_t:=(
-    PC=>(others=>'X'),
-    NOP=>true
-  );
+    PC=>(others=>'X')
+    );
 
   type Decode_reg_t is record
     PC:word;
-    instruction:word;
     inst_info:inst_info_type;
-    compared:word;
+    jmp_addr:word;
+  end record;
+  constant Decode_reg_init:Decode_reg_t:=(
+    PC=>(others=>'X'),
+    inst_info=>inst_info_init,
+    JMP_ADDR=>(others=>'X')
+    );
+  type Exe_reg_t is record
+    PC:word;
+    inst_info:inst_info_type;
+    BranchTaken:boolean;
+    Branch_addr:word;
     operand1:word;
     operand2:word;
-    IO_input:word;
-    NOP:boolean;
-    HLT:boolean;
+    Mem_addr:word;
+    Mem_data:word;
+    IO_data:word;
+    result:word;
   end record;
-    constant Decode_reg_init:Decode_reg_t:=(
-      PC=>(others=>'X'),
-      instruction=>(others=>'X'),
-      inst_info=>inst_info_init,
-      compared=>(others=>'X'),
-      operand1=>(others=>'X'),
-      operand2=>(others=>'X'),
-      IO_input=>(others=>'X'),
-      NOP=>true,
-      HLT=>false
-  );
-    type Exe_reg_t is record
-      PC:word;
-      inst_info:inst_info_type;
-      instruction:word;
-      compared:word;
-      operand1:word;
-      operand2:word;
-      result:word;
-      NOP:boolean;
-      HLT:boolean;
-  end record;
-    constant Exe_reg_init:Exe_reg_t:=(
+  constant Exe_reg_init:Exe_reg_t:=(
     PC=>(others=>'X'),
-    instruction=>(others=>'X'),
-    inst_info=>inst_info_init,
-    compared=>(others=>'X'),
+    inst_info=>inst_info_init, 
+    BranchTaken=>false,
+    branch_addr=>(others=>'X'),
     result=>(others=>'X'),
     operand1=>(others=>'X'),
     operand2=>(others=>'X'),
-    NOP=>true,
-    HLT=>false
-  );
+    Mem_addr=>(others=>'0'),
+    IO_data=>(others=>'X'),
+    Mem_data=>(others=>'X')
+    );
   type WB_reg_t is record
     PC:word;
-    NOP:boolean;
+    inst_info:inst_info_type;
+    Is_Ex_Mem_data_saved:boolean;  --stallでタイミングが狂った時に必要。高々一つ確保しておけば問題なし。
+    Ex_Mem_data:word;
+    result:word;
   end record;
-    constant WB_reg_init:WB_reg_t:=(
+  constant WB_reg_init:WB_reg_t:=(
     PC=>(others=>'X'),
-    NOP=>true
-  );
+    inst_info=>inst_info_init,
+    Is_Ex_Mem_data_saved=>false,
+    Ex_Mem_data=>(others=>'X'),
+    result=>(others=>'X')
+    );
 
   type reg_type is record
     state:state_type;
-    output:main_out_type;
     regfile:reg_file_t;
     fregfile:reg_file_t;
     F:Fetch_reg_t;
     D:Decode_reg_t;
     EX:Exe_reg_t;
     WB:WB_reg_t;
-    --to debug
     clk_count:dword;
   end record;
   constant r_init:reg_type :=(
     state=>init,
-    output=>main_out_init,
     regfile=>reg_file_init,
     fregfile=>reg_file_init,
     F=>Fetch_reg_init,
@@ -179,16 +180,16 @@ architecture twoproc of main is
   signal r,rin:reg_type:=r_init;
   signal fpu_input:fpu_in_type:=fpu_in_init;
   signal fpu_output:fpu_out_type:=fpu_out_init;
+  signal stall_in:staller_in_type:=staller_in_init;
+  signal stall_out:staller_out_type:=staller_out_init;
 begin
   FPU_UNIT:fpu port map(clk,rst,fpu_input,fpu_output);
-  comb:process(r,port_in,fpu_output)
+  STALLER_unit:staller port map(clk,rst,stall_in,stall_out);
+  comb:process(r,port_in,fpu_output,stall_out)
     variable v:reg_type;
-    variable vnextPC:word;
-    variable inst_info:inst_info_type;
+    variable src_reg:reg_file_t; --used in 'EX' stage
   begin
     v:=r;
-    vnextPC:=(others=>'X');
-    inst_info:=inst_info_init;
     --########################main logic########################
     case r.state is
       when init=>
@@ -201,171 +202,194 @@ begin
         v.regfile(reg_heap):=port_in.init_information.init_hp;
         v.regfile(reg_stack):=RESIZE(SRAM_ADDR_MAX,32);
         v.F.PC:=port_in.init_information.init_PC-1;
-        v.F.Nop:=false;
         v.state:=running;
       when running=>
         v.clk_count:=r.clk_count+1;
-        v.output:=main_out_init;
-        --F
---        v.F.PC:=r.F.PC+1;
-        --D
-        v.D.NOP:=r.f.nop;
-        v.D.PC:=r.F.PC;
-        if r.D.NOP then
-          inst_info:=v.D.inst_info;
-          v.d.instruction:=v.d.instruction;
-        else
-          inst_info:=Decode(port_in.instruction);
-          v.d.instruction:=port_in.instruction;
-        end if;
-        v.d.hlt:=inst_info.hlt or r.d.hlt;
-        v.D.inst_info:=inst_info;
-
-
-        if v.d.inst_info.rd/=0 and v.d.inst_info.rd= r.ex.inst_info.rd and r.ex.inst_info.format/=B
-          and v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
-          v.d.compared:=r.ex.result;
-        else
-          if v.d.inst_info.isFPR then
-            v.d.compared:=r.fregfile(to_integer(inst_info.rd));
-          else
-            v.d.compared:=r.regfile(to_integer(inst_info.rd));
-          end if;
-        end if;
-        if v.d.inst_info.rs/=0 and v.d.inst_info.rs= r.ex.inst_info.rd and r.ex.inst_info.format/=B
-          and v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
-          v.d.operand1:=r.ex.result;
-        else
-          if v.d.inst_info.isFPR then
-            v.D.operand1:=r.fregfile(to_integer(inst_info.rs));
-          else
-            v.D.operand1:=r.regfile(to_integer(inst_info.rs));
-          end if;
-        end if;
-
-        if inst_info.isimmediate then
-          v.D.operand2:=unsigned(resize(signed(inst_info.immediate),word_size));
-        else
-          if v.d.inst_info.rt/=0 and v.d.inst_info.rt= r.ex.inst_info.rd and r.ex.inst_info.format/=B and
-            v.d.inst_info.isFPR=r.ex.inst_info.isFPR then
-            v.D.operand2:=r.ex.result;
-          else
-            if v.d.inst_info.isFPR then
-              v.D.operand2:=r.fregfile(to_integer(inst_info.rt));
-            else
-              v.D.operand2:=r.regfile(to_integer(inst_info.rt));
-            end if;
-          end if;
-        end if;
-
-        if inst_info.isJMP then
-          v.f.pc:=v.d.operand2;
-        elsif inst_info.format=B then
-          case inst_info.Branch is
-            when B_BEQ=>
-              if v.d.compared=v.d.operand1 then
-                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
-              else
-                v.f.pc:=r.f.pc+1;
-              end if;
-            when B_BLT=>
-              if signed(v.d.compared)<signed(v.d.operand1) then
-                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
-              else
-                v.f.pc:=r.f.pc+1;
-              end if;
-            when B_BLE=>
-              if signed(v.d.compared)<=signed(v.d.operand1) then
-                v.f.pc:=unsigned(signed(r.f.pc)+resize(signed(inst_info.immediate),word_size));
-              else
-                v.f.pc:=r.f.pc+1;
-              end if;
-            when B_NOBRANCH=>
-              v.f.pc:=r.f.pc+1;
-          end case;
-        else
-          v.f.pc:=r.f.pc+1;
-        end if;
-        if inst_info.isLNK then
-          v.regfile(reg_ra):=r.f.PC+1;
-        end if;
-        if inst_info.IO_RE then
-          if port_in.IO_empty then
-            v.output.PC:=r.output.PC;
-            v.F:=r.F;
-            v.D.NOP:=true;
-          else
-            v.output.IO_RE:=true;
-            v.D.IO_input:=port_in.IO_data;
-          end if;
-        end if;
-
-        -----------Ex------------------------------------------
-        --Forwading
-        if  r.d.inst_info.rs=0 then
-          v.ex.operand1:=to_unsigned(0,word_size);
-        elsif r.d.inst_info.rs=r.ex.inst_info.rd then
-          v.ex.operand1:=r.ex.result;
-        else
-          v.ex.operand1:=r.d.operand1;
-        end if;
-        if  r.d.inst_info.rt=0 and not r.d.inst_info.isimmediate then
-          v.ex.operand2:=to_unsigned(0,word_size);
-        elsif r.d.inst_info.rt=r.ex.inst_info.rd and not r.d.inst_info.isimmediate then
-          v.ex.operand2:=r.ex.result;
-        else
-          v.ex.operand2:=r.d.operand2;
-        end if;
-
-        --main
-        v.ex.hlt:=r.d.hlt;
-        v.Ex.NOP:=r.D.NOP;
-        v.Ex.PC:=r.D.PC;
-        v.ex.inst_info:=r.d.inst_info;
-
-        --main
-        if r.d.inst_info.IO_RE then
-          v.ex.result:=r.d.IO_input;
-        else
-          V.ex.result:=alu(v.ex.operand1,v.ex.operand2,v.ex.inst_info.alu);
-        end if;
-        ---------Wb------------------------------------------
-        if r.ex.hlt then
+        --************************WB**********************
+        if r.ex.inst_info.hlt then
           v.state:=hlt;
         end if;
+        v.wb.PC:=r.ex.pc;
 
-        v.Wb.NOP:=r.Ex.NOP;
-        if r.ex.nop then
-          null;
+        --hazard chcek
+        if (port_in.IO_empty and r.ex.inst_info.IO_RE) or
+          (r.ex.inst_info.Mem_RE and not(port_in.Mem_hit)) then
+          stall_in.wb_hazzard<=true;
+          v.wb.inst_info:=inst_nop;
         else
-         if r.ex.inst_info.IO_WE then
-           if port_in.IO_full then
-             v.output.PC:=r.output.PC;
-             v.F:=r.F;
-             v.D.NOP:=true;
-           else
-             v.output.IO_WE:=true;
-             v.output.IO_data:=r.Ex.result;
-           end if;
-         end if;
-
-         if r.Ex.inst_info.format/=B then
-           if r.ex.inst_info.isFPR then
-             v.fregfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
-           else
-             v.regfile(to_integer(r.Ex.inst_info.rd)):=r.Ex.result;
-           end if;
-         end if;
+          stall_in.wb_hazzard<=false;
+          v.wb.inst_info:=r.ex.inst_info;
         end if;
+        --/hazzard check 終わり
+
+        --resultを決定する
+        case v.wb.inst_info.data_src is
+          when from_alu|from_fpu=>
+            v.wb.result:=r.ex.result;
+          when from_mem=>
+            v.wb.result:=port_in.mem_data;
+          when from_IO=>
+            v.wb.result:=port_in.IO_data;
+        end case;
+
+        if r.ex.inst_info.reg_we then
+          if v.wb.inst_info.toFPR then
+            v.fregfile(to_integer(r.ex.inst_info.rd)):=v.wb.result;
+          else
+            v.regfile(to_integer(r.ex.inst_info.rd)):=v.wb.result;
+          end if;
+        end if;
+
+        if r.ex.inst_info.isLNK then
+          v.regfile(reg_link):=r.ex.PC+1;
+        end if;
+        --************************Ex**********************
+
+        --hazzard check
+        stall_in.ex_hazzard<=(r.d.inst_info.data_src=from_fpu)and
+                              not fpu_output.data_ready;
+        --/hazzard check 終わり
+        v.Ex.PC:=r.D.PC;
+        v.EX.inst_info:=r.d.inst_info;
+        if v.ex.inst_info.fromFPR then
+          src_reg:=v.fregfile;
+        else
+          src_reg:=v.regfile;
+        end if;
+
+        v.ex.operand1:=src_reg(to_integer(r.d.inst_info.rs)); --ココらへんはそのうちforwarderに投げる
+        if r.d.inst_info.isImmediate then
+          v.ex.operand2:=resize(r.d.inst_info.immediate,32);
+        else
+          v.ex.operand2:=src_reg(to_integer(r.d.inst_info.rt));
+        end if;
+        case r.d.inst_info.data_src is
+          when from_alu=>
+            v.ex.result:=alu(v.ex.operand1,v.ex.operand2,r.d.inst_info.alu);
+          when from_fpu=>
+            v.ex.result:=fpu_output.result;
+          when others=>
+            v.ex.result:=(others=>'-');
+        end case;
+
+        --分岐方向を確定させる
+        v.ex.BranchTaken:=IsBranch(src_reg(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
+        if v.ex.BranchTaken then
+          v.ex.branch_addr:=unsigned(
+            signed(v.ex.PC)+
+            resize(signed(v.ex.inst_info.immediate),32)
+            );
+        else
+          v.ex.branch_addr:=(others=>'X');
+        end if;
+
+        if v.ex.inst_info.mem_re or v.ex.inst_info.mem_we then  --memory 入出力
+          v.ex.mem_addr:=unsigned(
+            signed(v.regfile(to_integer(r.d.inst_info.rs)))+
+            resize(signed(r.d.inst_info.immediate),32));
+        else
+          v.ex.mem_addr:=(others=>'0');
+        end if;
+
+        if v.ex.inst_info.IO_we then
+          v.ex.io_data:=v.ex.operand1;
+        end if;
+        --************************D***********************
+        --この stage は分岐予測の失敗で潰れうる
+        if v.ex.BranchTaken then
+          --分岐が成立時
+          --予測失敗しているのでこのステージをNOPに差し替える。
+          v.D.PC:=(others=>'X');
+          v.D.inst_info:=inst_nop;
+        else--非分岐。予測成功。
+          v.D.PC:=r.F.PC;
+          v.D.inst_info:=Decode(port_in.instruction);
+        end if;
+        if v.d.inst_info.isImmediate then
+          v.d.jmp_addr:=resize(v.d.inst_info.immediate,32);
+        else
+          v.d.jmp_addr:=v.regfile(to_integer(v.d.inst_info.rt));
+        end if;
+        --************************F***********************
+        --decide next F
+
+        if v.D.inst_info.isJMP then
+          v.F.PC:=v.d.jmp_addr;
+        elsif v.Ex.BranchTaken then
+          v.F.PC:=v.ex.branch_addr;
+        else
+          v.F.PC:=r.F.PC+1;
+        end if;
+
+        --************************************************
+        v.regfile(0):=(others=>'0');
+        v.fregfile(0):=(others=>'0');
       when hlt=>
+        report "hlt" severity failure;
     end case;
 
-    v.regfile(0):=to_unsigned(0,word_size);
-    v.fregfile(0):=to_unsigned(0,word_size);
     --######################## Out and rin######################
-    rin<=v;
-    port_out<=r.output;
-    port_out.PC<=v.F.PC;
+
+    --output and update
+    rin.state<=v.state;
+    rin.clk_count<=v.clk_count;
+    --from stage-F
+    if stall_out.f_stall then
+      rin.F<=r.F;
+      port_out.PC<=r.F.PC;
+    else
+      rin.F<=v.F;
+      port_out.PC<=v.F.PC;
+    end if;
+    --from stage-D
+    if stall_out.d_stall then
+      rin.D<=r.D;
+    else
+      rin.D<=v.D;
+    end if;
+    --from stage-Ex
+    if stall_out.ex_stall then
+      rin.Ex<=r.Ex;
+      port_out.Mem_addr<=(others=>'1');
+      port_out.Mem_data<=(others=>'X');
+      port_out.Mem_we<=false;
+      port_out.Mem_re<=false;
+      port_out.IO_data<=(others=>'X');
+      port_out.IO_RE<=false;
+      port_out.IO_WE<=false;
+      fpu_input.alu_control<=alu_nop;
+      fpu_input.operand1<=(others=>'0');
+      fpu_input.operand2<=(others=>'0');
+    else
+      rin.Ex<=v.Ex;
+      port_out.Mem_addr<=resize(v.ex.mem_addr,20);
+      port_out.Mem_data<=v.ex.mem_data;
+      port_out.Mem_we<=v.ex.inst_info.mem_we;
+      port_out.Mem_re<=v.ex.inst_info.mem_re;
+      port_out.IO_data<=v.ex.IO_data;
+      port_out.IO_RE<=v.ex.inst_info.IO_re;
+      port_out.IO_WE<=v.ex.inst_info.IO_we;
+
+      if v.ex.inst_info.data_src=from_fpu then
+        fpu_input.alu_control<=v.ex.inst_info.alu;
+        fpu_input.operand1<=v.ex.operand1;
+        fpu_input.operand2<=v.ex.operand2;
+      else
+        fpu_input.alu_control<=alu_nop;
+        fpu_input.operand1<=(others=>'0');
+        fpu_input.operand2<=(others=>'0');
+      end if;
+    end if;
+    --from stage-Wb
+    if stall_out.wb_stall then
+      rin.Wb<=r.Wb;
+      rin.regfile<=r.regfile;
+      rin.fregfile<=r.fregfile;
+    else
+      rin.Wb<=v.Wb;
+      rin.regfile<=v.regfile;
+      rin.fregfile<=v.fregfile;
+    end if;
   end process;
 
   regs:process(clk,rst)

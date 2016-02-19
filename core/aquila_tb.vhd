@@ -102,7 +102,9 @@ architecture behavior of aquila_tb is
   file    FILEPOINT   :   BIN open read_mode is "test.run";
 
    constant MCLK1_period : time := CLK_LENGTH;
-   -- constant ROMMAX:Integer:=11;
+
+
+-- constant ROMMAX:Integer:=11;
    -- type rom_t is array (0 to ROMMAX) of unsigned(31 downto 0);
    -- constant rom:rom_t:=(
    --       to_unsigned(0,32),

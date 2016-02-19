@@ -16,8 +16,8 @@ package fpu_interface is
   end record;
   constant fpu_in_init:fpu_in_type:=(
     ALU_control=>ALU_nop,
-    operand1=>(others=>'X'),
-    operand2=>(others=>'X')
+    operand1=>(others=>'0'),
+    operand2=>(others=>'0')
     );
   type fpu_out_type is record
     result:word;
@@ -66,13 +66,13 @@ architecture twoproc of fpu is
       input  : in  std_logic_vector (31 downto 0);
       output : out std_logic_vector (31 downto 0));
   end component;
-  component ftoi
-    Port (
-      clk    : in  std_logic;
-      input  : in  STD_LOGIC_VECTOR (31 downto 0);
-      output : out STD_LOGIC_VECTOR (31 downto 0);
-      flag   : out STD_LOGIC_VECTOR ( 1 downto 0)); -- underflow / overflow
-  end component;
+--  component ftoi
+--    Port (
+--      clk    : in  std_logic;
+--      input  : in  STD_LOGIC_VECTOR (31 downto 0);
+--      output : out STD_LOGIC_VECTOR (31 downto 0);
+--      flag   : out STD_LOGIC_VECTOR ( 1 downto 0)); -- underflow / overflow
+--  end component;
 
 
   --types and constants
@@ -80,10 +80,12 @@ architecture twoproc of fpu is
   type reg_type is record
     state:state_type;
     output:fpu_out_type;
+    ex_input:fpu_in_type;
   end record;
   constant r_init:reg_type :=(
     state=>init,
-    output=>fpu_out_init
+    output=>fpu_out_init,
+    ex_input=>fpu_in_init
     );
   signal r,rin:reg_type:=r_init;
   type result_type is record
@@ -109,7 +111,7 @@ begin
   FD:fadd port map(clk,std_logic_vector(port_in.operand1),std_logic_vector(fadd_operand),result.add);
   FM:fmul port map(std_logic_vector(port_in.operand1),std_logic_vector(port_in.operand2),result.mul);
   FI:finv port map(clk,std_logic_vector(port_in.operand1),result.inv);
-  F2I:ftoi port map(clk,std_logic_vector(port_in.operand1),result.f2i,ftoiflag);
+--  F2I:ftoi port map(clk,std_logic_vector(port_in.operand1),result.f2i,ftoiflag);
 --  I2F:itof port map(clk,std_logic_vector(port_in.operand1),result.i2f);
 
   with (port_in.ALU_control) select
@@ -119,6 +121,12 @@ begin
                     unsigned(result.f2i) when alu_ftoi,
                     unsigned(result.i2f) when alu_itof,
                     port_in.operand1 when others;
+
+  proc:process(r,port_in)
+  begin
+    rin.ex_input<=port_in;
+    port_out.data_ready<=(port_in=r.ex_input);
+  end process;
 
   regs:process(clk,rst)
   begin

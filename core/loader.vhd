@@ -116,6 +116,7 @@ begin
           v.PC:=r.PC+1;
           if r.PC=USER_SECTION_OFFSET+r.text_size-1 then
             v.state:=data_recv;
+            v.PC:=resize(DATA_SECTION_OFFSET,32);
           end if;
         else
           v.port_out.inst_mem_we:=false;
@@ -127,7 +128,7 @@ begin
           v.port_out.data:=loader_in.IO_data;
           v.port_out.mem_addr:=r.PC(SRAM_ADDR_SIZE-1 downto 0);
           v.PC:=r.PC+1;
-          if r.PC=USER_SECTION_OFFSET+r.text_size+r.data_size-1 then
+          if r.PC=DATA_SECTION_OFFSET+r.data_size-1 then
             v.state:=hlt;
           end if;
         else
@@ -139,7 +140,7 @@ begin
         v.port_out.loaded:=true;
         v.port_out.init_information:=(
         init_PC=>r.entry_point,
-        init_hp=>USER_SECTION_OFFSET+r.text_size+r.data_size
+        init_hp=>resize(HEAP_SECTION_OFFSET,32)
       );
     end case;
     rin<=v;

@@ -1,0 +1,52 @@
+
+
+recfib n
+if n<=1 then
+  ans<=n;
+  return;
+else
+  M<=n;
+  v<=n-1;
+  ans<=fib(v);
+  M2<=ans;
+  n<=M
+  v<=n-2;
+  ans<=fib(v);
+  ans1<=M2;
+  ans<=ans1+ans;
+  return;
+
+
+--main
+  n<=13;
+  v=n-1;
+  ans<=fib(v);
+  out ans;
+  hlt;
+
+
+-----------------------------
+
+recfib v
+if v<=1 then goto leaf;
+  M<=v;
+  v<=v-1;
+  ans<=fib(v);
+  M2<=ans;
+  v<=M
+  v<=v-2;
+  ans<=fib(v);
+  ans1<=M2;
+  ans<=ans1+ans;
+  return;
+leaf:
+  ans<=n;
+  return;
+
+
+--main
+  n<=13;
+  v=n-1;
+  ans<=fib(v);
+  out ans;
+  hlt;
