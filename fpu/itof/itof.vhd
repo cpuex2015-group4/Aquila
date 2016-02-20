@@ -7,10 +7,11 @@ entity itof is
     clk    : in  std_logic;
     input  : in  STD_LOGIC_VECTOR (31 downto 0);
     output : out STD_LOGIC_VECTOR (31 downto 0));
-end fadd;
+end itof;
 
 architecture struct of itof is
 	signal sign : std_logic;
+	signal sint : std_logic_vector (31 downto 0);
 	signal expo : std_logic_vector ( 7 downto 0);
   signal mant : std_logic_vector (25 downto 0);
 	signal mano : std_logic_vector (22 downto 0);
@@ -106,11 +107,11 @@ begin
 							when flag = '1' and mant(25 downto 3) = "11111111111111111111111" else
 						'0';
 
-	mano   <= mant
+	mano   <= mant(25 downto 3)
 							when flag  = '0' else
 						"00000000000000000000000"
 							when flag2 = '1' else
-						mant + 1;
+						mant(25 downto 3) + 1;
 
 	expo   <= "10011101"
 							when sint(30) = '1' or (sint(29) = '1' and flag2 = '1') else
