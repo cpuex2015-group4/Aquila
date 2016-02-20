@@ -15,5 +15,4 @@ loop:
 	subi %r4,%r4,$1
 	j loop
 loop_end:
-	out %f3
 	hlt

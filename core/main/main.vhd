@@ -201,7 +201,7 @@ begin
         v.fregfile(0):=(others=>'0');
         v.regfile(reg_heap):=port_in.init_information.init_hp;
         v.regfile(reg_stack):=RESIZE(SRAM_ADDR_MAX,32);
-        v.F.PC:=port_in.init_information.init_PC-1;
+        v.F.PC:=port_in.init_information.init_PC;
         v.state:=running;
       when running=>
         v.clk_count:=r.clk_count+1;
