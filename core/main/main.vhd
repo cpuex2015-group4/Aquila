@@ -201,7 +201,7 @@ begin
         v.fregfile(0):=(others=>'0');
         v.regfile(reg_heap):=port_in.init_information.init_hp;
         v.regfile(reg_stack):=RESIZE(SRAM_ADDR_MAX,32);
-        v.F.PC:=port_in.init_information.init_PC-1;
+        v.F.PC:=port_in.init_information.init_PC;
         v.state:=running;
       when running=>
         v.clk_count:=r.clk_count+1;
@@ -294,11 +294,14 @@ begin
         if v.ex.inst_info.IO_we then
           v.ex.io_data:=v.ex.operand1;
         end if;
+        if v.ex.inst_info.Mem_we then
+          v.ex.mem_data:=v.regfile(to_integer(r.d.inst_info.rd));
+        end if;
         --************************D***********************
         --この stage は分岐予測の失敗で潰れうる
         if v.ex.BranchTaken then
           --分岐が成立時
-          --予測失敗しているのでこのステージをNOPに差し替える。
+         --予測失敗しているのでこのステージをNOPに差し替える。
           v.D.PC:=(others=>'X');
           v.D.inst_info:=inst_nop;
         else--非分岐。予測成功。

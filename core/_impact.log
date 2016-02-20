@@ -1,6 +1,6 @@
 iMPACT Version: 14.4
 
-iMPACT log file Started on Wed Feb 17 04:10:53 2016
+iMPACT log file Started on Sat Feb 20 22:25:43 2016
 
 Welcome to iMPACT
 iMPACT Version: 14.4
@@ -21,18 +21,70 @@ File version of /usr/share/xusbdfwu.hex = 1030.
 Type = 0x0004.
  Cable Type = 3, Revision = 0.
  Setting cable speed to 6 MHz.
+ERROR:Cse - A reference voltage has not been detected on the ribbon cable   interface to the target system ( pin 2 ).  Check that power is applied to the   target system and that the ribbon cable is properly seated at both ends.  The   status LED on Platform Cable USB will be GREEN if target voltage is in the   proper range and applied to the correct pin.
+Cable connection failed.
+Connecting to cable (Parallel Port - parport0).
+ Linux release = 3.13.0-77-generic.
+WARNING:iMPACT -  Module windrvr6 is not loaded. Please reinstall the cable   drivers. See Answer Record 22648.
+Cable connection failed.
+Connecting to cable (Parallel Port - parport1).
+ Linux release = 3.13.0-77-generic.
+WARNING:iMPACT -  Module windrvr6 is not loaded. Please reinstall the cable   drivers. See Answer Record 22648.
+Cable connection failed.
+Connecting to cable (Parallel Port - parport2).
+ Linux release = 3.13.0-77-generic.
+WARNING:iMPACT -  Module windrvr6 is not loaded. Please reinstall the cable   drivers. See Answer Record 22648.
+Cable connection failed.
+Connecting to cable (Parallel Port - parport3).
+ Linux release = 3.13.0-77-generic.
+WARNING:iMPACT -  Module windrvr6 is not loaded. Please reinstall the cable   drivers. See Answer Record 22648.
+Cable connection failed.
+PROGRESS_END - End Operation.
+Elapsed time =      4 sec.
+Cable autodetection failed.
+WARNING:iMPACT:923 - Can not find cable, check cable setup !// *** BATCH CMD : setMode -bs
+// *** BATCH CMD : setMode -ss
+// *** BATCH CMD : setMode -sm
+// *** BATCH CMD : setMode -hw140
+// *** BATCH CMD : setMode -spi
+// *** BATCH CMD : setMode -acecf
+// *** BATCH CMD : setMode -acempm
+// *** BATCH CMD : setMode -pff
+Welcome to iMPACT
+iMPACT Version: 14.4
+Project: '/home/yukiimai/Sandbox/cad/week3//auto_project.ipf' already exists.
+Original project has been renamed to'/home/yukiimai/Sandbox/cad/week3//auto_project_1.ipf'.
+Project: /home/yukiimai/Sandbox/cad/week3//auto_project.ipf created.
+// *** BATCH CMD : setMode -bs
+GUI --- Auto connect to cable...
+// *** BATCH CMD : setCable -port auto
+AutoDetecting cable. Please wait.
+*** WARNING ***: When port is set to auto detect mode, cable speed is set todefault 6 MHz regardless of explicit arguments supplied for setting the baudrates
+PROGRESS_START - Starting Operation.
+Connecting to cable (Usb Port - USB21).
+Checking cable driver.
+File version of /home/yukiimai/Xilinx/14.4/ISE_DS/ISE/bin/lin64/xusbdfwu.hex =1030.
+File version of /usr/share/xusbdfwu.hex = 1030.
+ Using libusb.
+ Kernel release = 3.13.0-77-generic.
+ Max current requested during enumeration is 74 mA.
+Type = 0x0004.
+ Cable Type = 3, Revision = 0.
+ Setting cable speed to 6 MHz.
 Cable connection established.
-Firmware version = 1303.
+Firmware version = 1028.
 File version of /home/yukiimai/Xilinx/14.4/ISE_DS/ISE/data/xusb_xlp.hex = 1303.
 Firmware hex file version = 1303.
+Downloading /home/yukiimai/Xilinx/14.4/ISE_DS/ISE/data/xusb_xlp.hex.
+Downloaded firmware version = 1303.
 PLD file version = 0012h.
  PLD version = 0012h.
 PROGRESS_END - End Operation.
-Elapsed time =      0 sec.
+Elapsed time =      1 sec.
 Type = 0x0004.
 ESN option: 0000117DE3FD01.
 Attempting to identify devices in the boundary-scan chain configuration...
-INFO:iMPACT - Current time: 16/02/17 4:10
+INFO:iMPACT - Current time: 16/02/20 22:30
 // *** BATCH CMD : Identify -inferir 
 PROGRESS_START - Starting Operation.
 Identifying chain contents...'0': : Manufacturer's ID = Xilinx xc5vlx50t, Version : 8
@@ -58,7 +110,19 @@ UserID read from the bitstream file = 0xFFFFFFFF.
 ----------------------------------------------------------------------
 INFO:iMPACT:501 - '2': Added Device xc5vlx50t successfully.
 ----------------------------------------------------------------------
-INFO:iMPACT - Current time: 16/02/17 4:11
+INFO:iMPACT - Current time: 16/02/20 22:31
+// *** BATCH CMD : Program -p 2 
+Maximum TCK operating frequency for this device chain: 15000000.
+Validating chain...
+Boundary-scan chain validated successfully.
+2: Device Temperature: Current Reading: -273.00 C
+2: VCCINT Supply: Current Reading:   0.000 V
+2: VCCAUX Supply: Current Reading:   0.000 V
+PROGRESS_START - Starting Operation.
+'2': Programming device...
+PROGRESS_END - End Operation.
+Elapsed time =      2 sec.
+INFO:iMPACT - Current time: 16/02/20 22:31
 // *** BATCH CMD : Program -p 2 
 Maximum TCK operating frequency for this device chain: 15000000.
 Validating chain...
@@ -85,7 +149,7 @@ INFO:iMPACT - '2': Checking done pin....done.
 '2': Programmed successfully.
 PROGRESS_END - End Operation.
 Elapsed time =      4 sec.
-INFO:iMPACT - Current time: 16/02/17 4:11
+INFO:iMPACT - Current time: 16/02/20 23:26
 // *** BATCH CMD : Program -p 2 
 Maximum TCK operating frequency for this device chain: 15000000.
 Validating chain...
@@ -112,96 +176,3 @@ INFO:iMPACT - '2': Checking done pin....done.
 '2': Programmed successfully.
 PROGRESS_END - End Operation.
 Elapsed time =      4 sec.
-INFO:iMPACT - Current time: 16/02/17 4:12
-// *** BATCH CMD : ReadIdcode -p 2 
-Maximum TCK operating frequency for this device chain: 15000000.
-Validating chain...
-Boundary-scan chain validated successfully.
-2: Device Temperature: Current Reading: -273.00 C
-2: VCCINT Supply: Current Reading:   0.000 V
-2: VCCAUX Supply: Current Reading:   0.000 V
-'2': IDCODE is '10000010101010010110000010010011'
-'2': IDCODE is '82a96093' (in hex).
-'2': : Manufacturer's ID = Xilinx xc5vlx50t, Version : 8
-INFO:iMPACT - Current time: 16/02/17 4:12
-// *** BATCH CMD : Program -p 2 
-Maximum TCK operating frequency for this device chain: 15000000.
-Validating chain...
-Boundary-scan chain validated successfully.
-2: Device Temperature: Current Reading: -273.00 C
-2: VCCINT Supply: Current Reading:   0.000 V
-2: VCCAUX Supply: Current Reading:   0.000 V
-PROGRESS_START - Starting Operation.
-'2': Programming device...
- Match_cycle = NoWait.
-Match cycle: NoWait
- LCK_cycle = NoWait.
-LCK cycle: NoWait
-done.
-INFO:iMPACT:2219 - Status register values:
-INFO:iMPACT - 0011 1111 0011 1110 0000 1011 1100 0000 
-INFO:iMPACT:579 - '2': Completed downloading bit file to device.
-INFO:iMPACT:188 - '2': Programming completed successfully.
- Match_cycle = NoWait.
-Match cycle: NoWait
- LCK_cycle = NoWait.
-LCK cycle: NoWait
-INFO:iMPACT - '2': Checking done pin....done.
-'2': Programmed successfully.
-PROGRESS_END - End Operation.
-Elapsed time =      4 sec.
-INFO:iMPACT - Current time: 16/02/17 4:23
-// *** BATCH CMD : Program -p 2 
-Maximum TCK operating frequency for this device chain: 15000000.
-Validating chain...
-Boundary-scan chain validated successfully.
-PROGRESS_START - Starting Operation.
-2: Device Temperature: Current Reading: -273.00 C
-2: VCCINT Supply: Current Reading:   0.000 V
-2: VCCAUX Supply: Current Reading:   0.000 V
-'2': Programming device...
- Match_cycle = NoWait.
-Match cycle: NoWait
- LCK_cycle = NoWait.
-LCK cycle: NoWait
-done.
-INFO:iMPACT:2219 - Status register values:
-INFO:iMPACT - 0011 1111 0011 1110 0000 1011 1100 0000 
-INFO:iMPACT:579 - '2': Completed downloading bit file to device.
-INFO:iMPACT:188 - '2': Programming completed successfully.
- Match_cycle = NoWait.
-Match cycle: NoWait
- LCK_cycle = NoWait.
-LCK cycle: NoWait
-INFO:iMPACT - '2': Checking done pin....done.
-'2': Programmed successfully.
-PROGRESS_END - End Operation.
-Elapsed time =      4 sec.
-Project: '/home/yukiimai/Sandbox/cad/week3//auto_project.ipf' created.
-// *** BATCH CMD : setMode -bs
-// *** BATCH CMD : setMode -ss
-// *** BATCH CMD : setMode -sm
-// *** BATCH CMD : setMode -hw140
-// *** BATCH CMD : setMode -spi
-// *** BATCH CMD : setMode -acecf
-// *** BATCH CMD : setMode -acempm
-// *** BATCH CMD : setMode -pff
-// *** BATCH CMD : setMode -bs
-// *** BATCH CMD : saveProjectFile -file"/home/yukiimai/Sandbox/cad/week3//auto_project.ipf"
-INFO:iMPACT - User_EnvOsname: 'Ubuntu'
-INFO:iMPACT - User_EnvOsrelease: 'Ubuntu 14.04.3 LTS'
-// *** BATCH CMD : setMode -bs
-INFO:iMPACT - Launching WebTalk, please refer to the webtalk log at   /home/yukiimai/Sandbox/cad/week3/webtalk.log for details.
-INFO:iMPACT - Running wbtc successfully.
-// *** BATCH CMD : setMode -bs
-// *** BATCH CMD : deleteDevice -position 1
-----------------------------------------------------------------------
-// *** BATCH CMD : deleteDevice -position 1
-// *** BATCH CMD : setMode -bs
-// *** BATCH CMD : setMode -ss
-// *** BATCH CMD : setMode -sm
-// *** BATCH CMD : setMode -hw140
-// *** BATCH CMD : setMode -spi
-// *** BATCH CMD : setMode -acecf
-// *** BATCH CMD : setMode -acempm
-// *** BATCH CMD : setMode -pff

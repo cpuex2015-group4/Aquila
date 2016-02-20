@@ -4,7 +4,7 @@ one:
 
 .text
 _leml_entry:
-	in %r4
+	addi %r4,%r0,$10
 	add.s %f1,%f0,%f0
 	ld.s %f2,%r0,one
 loop:
@@ -15,5 +15,4 @@ loop:
 	subi %r4,%r4,$1
 	j loop
 loop_end:
-	out %f3
 	hlt
