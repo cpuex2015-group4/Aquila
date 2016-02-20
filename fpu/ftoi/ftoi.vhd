@@ -6,16 +6,16 @@ entity ftoi is
   Port (
     clk    : in  std_logic;
     input  : in  STD_LOGIC_VECTOR (31 downto 0);
-    output : out STD_LOGIC_VECTOR (31 downto 0);
+    output : out STD_LOGIC_VECTOR (31 downto 0));
 --		flag   : out STD_LOGIC_VECTOR ( 1 downto 0)); -- underflow / overflow
-end fadd;
+end ftoi;
 
 architecture struct of ftoi is
 	signal sign : std_logic;
 	signal expo : std_logic_vector ( 7 downto 0);
   signal mant : std_logic_vector (22 downto 0);
 	signal into : std_logic_vector (33 downto 0); -- 0(overflow) 000 0000 0000 0000 0000 0000 0000 0000 0(round) 0(guard)
-	signal rint : std_logic_vector (31 downto 0);
+	signal rint : std_logic_vector (30 downto 0);
 	signal sint : std_logic_vector (31 downto 0);
 	signal stic : std_logic;
 begin
@@ -92,12 +92,13 @@ begin
 						  when expo = "10011100" else
 						"01"                                & mant(22 downto  0) & "000000000"
 						  when expo = "10011101" else
-						"10000000000000000000000000000000000" -- overflow
+						"1000000000000000000000000000000000"; -- overflow
 
-	stic  <= '1' when expo < "01111101" or
-									 (expo = "01111101" and mant(22 downto 0) /= "00000000000000000000000") or
+	stic   <= '1'
+							when (expo = "01111101" and mant(22 downto 0) /= "00000000000000000000000") or
 									 (expo = "01111110" and mant(21 downto 0) /=  "0000000000000000000000") or
 									 (expo = "01111111" and mant(20 downto 0) /=   "000000000000000000000") or
+									 (expo(7) = '0') or
 									 (expo = "10000000" and mant(19 downto 0) /=    "00000000000000000000") or
 									 (expo = "10000001" and mant(18 downto 0) /=     "0000000000000000000") or
 									 (expo = "10000010" and mant(17 downto 0) /=      "000000000000000000") or
