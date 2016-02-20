@@ -7,7 +7,7 @@ entity ftoi is
     clk    : in  std_logic;
     input  : in  STD_LOGIC_VECTOR (31 downto 0);
     output : out STD_LOGIC_VECTOR (31 downto 0);
-		flag   : out STD_LOGIC_VECTOR ( 1 downto 0)); -- underflow / overflow
+--		flag   : out STD_LOGIC_VECTOR ( 1 downto 0)); -- underflow / overflow
 end fadd;
 
 architecture struct of ftoi is
@@ -15,6 +15,8 @@ architecture struct of ftoi is
 	signal expo : std_logic_vector ( 7 downto 0);
   signal mant : std_logic_vector (22 downto 0);
 	signal into : std_logic_vector (33 downto 0); -- 0(overflow) 000 0000 0000 0000 0000 0000 0000 0000 0(round) 0(guard)
+	signal rint : std_logic_vector (31 downto 0);
+	signal sint : std_logic_vector (31 downto 0);
 	signal stic : std_logic;
 begin
   sign   <= input(31);
@@ -118,10 +120,14 @@ begin
 									 (expo = "10010011" and mant(0)           /=                       '0') else
 					 '0';
 
-	output <= sign & into(32 downto 2)
+	rint   <= into(32 downto 2)
 							when into(1) = '0' or (into(2) = '0' and into(0) = '0' and stic = '0') else
-						sign & into(32 downto 2) + 1;
-	flag   <= into(33) & "1"
-							when into(33 downto 2) = "00000000000000000000000000000000" and (into(1 downto 0) /= "00" or stic = '1') else
-						into(33) & "0"
+						into(32 downto 2) + 1;
+
+	output <= "0" & rint
+							when sign = '0' else
+						"1" & (rint(30 downto 1) xor "111111111111111111111111111111") & rint(0);
+--	flag   <= into(33) & "1"
+--						when into(33 downto 2) = "00000000000000000000000000000000" and (into(1 downto 0) /= "00" or stic = '1') else
+--					into(33) & "0"
 end struct;
