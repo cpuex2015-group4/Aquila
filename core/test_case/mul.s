@@ -11,6 +11,7 @@ _mul:
 	jal _mul
 	ld %r8,%r7,$1
 	ld %r4,%r7,$2
+	addi %r7,%r7,$2
 	add %r3,%r3,%r8
 	jr %r4
 _end:
@@ -18,6 +19,7 @@ _end:
 	jr %r4
 
 _leml_entry:
+	subi %r7,%r7,$1
 	li %r8,$7
 	li %r9,$4
 	jal _mul

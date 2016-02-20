@@ -294,6 +294,9 @@ begin
         if v.ex.inst_info.IO_we then
           v.ex.io_data:=v.ex.operand1;
         end if;
+        if v.ex.inst_info.Mem_we then
+          v.ex.mem_data:=v.regfile(to_integer(r.d.inst_info.rd));
+        end if;
         --************************D***********************
         --この stage は分岐予測の失敗で潰れうる
         if v.ex.BranchTaken then

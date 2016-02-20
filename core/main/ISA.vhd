@@ -257,6 +257,9 @@ package body ISA is
           end if;
         end if;
     end case;
+    if info.Mem_WE then
+      info.reg_we:=false;
+    end if;
     return info;
   end decode;
 
