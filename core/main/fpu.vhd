@@ -106,8 +106,8 @@ architecture twoproc of fpu is
   signal fadd_operand:word:=(others=>'X');
   signal ftoiflag:STD_LOGIC_VECTOR(1 downto 0);
 begin
-  fadd_operand<=not port_in.operand1(31) &  port_in.operand1(30 downto 0) when port_in.ALU_control= alu_fsub else
-                 port_in.operand1;
+  fadd_operand<=(not port_in.operand2(31)) &  port_in.operand2(30 downto 0) when port_in.ALU_control= alu_fsub else
+                 port_in.operand2;
   FD:fadd port map(clk,std_logic_vector(port_in.operand1),std_logic_vector(fadd_operand),result.add);
   FM:fmul port map(std_logic_vector(port_in.operand1),std_logic_vector(port_in.operand2),result.mul);
   FI:finv port map(clk,std_logic_vector(port_in.operand1),result.inv);

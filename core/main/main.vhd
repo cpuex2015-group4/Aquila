@@ -298,7 +298,7 @@ begin
         --この stage は分岐予測の失敗で潰れうる
         if v.ex.BranchTaken then
           --分岐が成立時
-          --予測失敗しているのでこのステージをNOPに差し替える。
+         --予測失敗しているのでこのステージをNOPに差し替える。
           v.D.PC:=(others=>'X');
           v.D.inst_info:=inst_nop;
         else--非分岐。予測成功。
