@@ -199,6 +199,14 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="16"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="16"/>
     </file>
+    <file xil_pn:name="../fpu/ftoi/ftoi.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="214"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="214"/>
+    </file>
+    <file xil_pn:name="../fpu/itof/itof.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="215"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="215"/>
+    </file>
     <file xil_pn:name="ipcore_dir/INST_MEM.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>

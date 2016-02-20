@@ -66,13 +66,20 @@ architecture twoproc of fpu is
       input  : in  std_logic_vector (31 downto 0);
       output : out std_logic_vector (31 downto 0));
   end component;
---  component ftoi
---    Port (
---      clk    : in  std_logic;
---      input  : in  STD_LOGIC_VECTOR (31 downto 0);
---      output : out STD_LOGIC_VECTOR (31 downto 0);
---      flag   : out STD_LOGIC_VECTOR ( 1 downto 0)); -- underflow / overflow
---  end component;
+  component ftoi
+    Port (
+      clk    : in  std_logic;
+      input  : in  STD_LOGIC_VECTOR (31 downto 0);
+      output : out STD_LOGIC_VECTOR (31 downto 0)
+      );
+  end component;
+  component itof
+    Port (
+      clk    : in  std_logic;
+      input  : in  STD_LOGIC_VECTOR (31 downto 0);
+      output : out STD_LOGIC_VECTOR (31 downto 0)
+      );
+  end component;
 
 
   --types and constants
@@ -104,15 +111,14 @@ architecture twoproc of fpu is
   );
   signal result:result_type:=result_init;
   signal fadd_operand:word:=(others=>'X');
-  signal ftoiflag:STD_LOGIC_VECTOR(1 downto 0);
 begin
   fadd_operand<=(not port_in.operand2(31)) &  port_in.operand2(30 downto 0) when port_in.ALU_control= alu_fsub else
                  port_in.operand2;
   FD:fadd port map(clk,std_logic_vector(port_in.operand1),std_logic_vector(fadd_operand),result.add);
   FM:fmul port map(std_logic_vector(port_in.operand1),std_logic_vector(port_in.operand2),result.mul);
   FI:finv port map(clk,std_logic_vector(port_in.operand1),result.inv);
---  F2I:ftoi port map(clk,std_logic_vector(port_in.operand1),result.f2i,ftoiflag);
---  I2F:itof port map(clk,std_logic_vector(port_in.operand1),result.i2f);
+  F2I:ftoi port map(clk,std_logic_vector(port_in.operand1),result.f2i);
+  I2F:itof port map(clk,std_logic_vector(port_in.operand1),result.i2f);
 
   with (port_in.ALU_control) select
   port_out.result<=unsigned(result.add)  when alu_fadd |alu_fsub,
