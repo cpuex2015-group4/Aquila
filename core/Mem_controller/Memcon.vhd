@@ -28,7 +28,7 @@ architecture twoproc of Memcon is
     we:boolean;
   end record;
   constant snap_init:snap_type:=(
-    input=>(others=>'X'),
+    input=>(others=>'-'),
     re=>false,
     we=>false
   );
@@ -60,7 +60,7 @@ begin
     if r.snaps(1).re then
       v.data_from_sram:=unsigned(sram_zd);
     else
-      v.data_from_sram:=(others=>'X');
+      v.data_from_sram:=(others=>'-');
     end if;
     --###################outputs
     memcon_out.output<=r.data_from_sram;

@@ -117,8 +117,8 @@ package ISA is
 
   constant inst_info_init:inst_info_type:=(
     format=>RI,
-    OPecode=>(others=>'X'),
-    opt=>(others=>'X'),
+    OPecode=>(others=>'-'),
+    opt=>(others=>'-'),
     isImmediate=>false,
     fromFPR=>false,
     toFPR=>false,
@@ -134,7 +134,7 @@ package ISA is
     rt=>(others=>'0'),
     reg_we=>false,
     data_src=>from_alu,
-    immediate=>(others=>'X'),
+    immediate=>(others=>'-'),
     funct=>(others=>'0'),
     ALU=>ALU_NOP,
     HLT=>false,
@@ -155,7 +155,7 @@ package body ISA is
     variable opt:opt_type;
     variable bit_image:bit_image_type;
   begin
-    opt:=(others=>'X');
+    opt:=(others=>'-');
     info:=inst_info_init;
     info.HLT:=(inst=0);
     info.Opecode:=(inst(30 downto 26));
