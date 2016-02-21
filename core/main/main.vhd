@@ -295,7 +295,7 @@ begin
           v.ex.io_data:=v.ex.operand1;
         end if;
         if v.ex.inst_info.Mem_we then
-          v.ex.mem_data:=v.regfile(to_integer(r.d.inst_info.rd));
+          v.ex.mem_data:=src_reg(to_integer(r.d.inst_info.rd));
         end if;
         --************************D***********************
         --この stage は分岐予測の失敗で潰れうる
