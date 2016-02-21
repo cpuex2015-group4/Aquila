@@ -48,6 +48,10 @@ package ISA is
   constant OP_OUT:fct_type:=to_unsigned(3,fct_size);
   constant OP_ITOF:fct_type:=to_unsigned(4,fct_size);
   constant OP_FTOI:fct_type:=to_unsigned(5,fct_size);
+  constant OP_CLKHIGH:fct_type:=to_unsigned(512,fct_size);
+  constant OP_CLKLOW:fct_type:=to_unsigned(513,fct_size);
+  constant OP_MEMSTALLS:fct_type:=to_unsigned(514,fct_size);
+  constant OP_PREFETCHS:fct_type:=to_unsigned(516,fct_size);
 
 --B bit image
   constant BEQ:bit_image_type:=to_unsigned(0,BRI_bit_image_size);
@@ -104,6 +108,11 @@ package ISA is
     funct:fct_type;
     ALU:ALU_control_type;
     HLT:boolean;
+
+    clkhigh:boolean;
+    clklow:boolean;
+    memstalls:boolean;
+    prefetch_s:boolean;
   end record;
 
   constant inst_info_init:inst_info_type:=(
@@ -128,7 +137,11 @@ package ISA is
     immediate=>(others=>'X'),
     funct=>(others=>'0'),
     ALU=>ALU_NOP,
-    HLT=>false
+    HLT=>false,
+    clkhigh=>false,
+    clklow=>false,
+    memstalls=>false,
+    prefetch_s=>false
     );
   constant inst_nop:inst_info_type:=inst_info_init;
   function Decode(inst:word) return inst_info_type;
@@ -203,6 +216,14 @@ package body ISA is
           when OP_FTOI=>
             info.ALU:=ALU_ftoi;
             info.data_src:=from_fpu;
+          when OP_CLKHIGH=>
+            info.clkhigh:=true;
+          when OP_CLKLOW=>
+            info.clklow:=true;
+          when OP_MEMSTALLS=>
+            info.memstalls:=true;
+          when OP_PREFETCHS=>
+            info.prefetch_s:=true;
           when others=>
             info.ALU:=ALU_NOP;
         end case;
@@ -270,10 +291,10 @@ package body ISA is
     eq := ( inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 ) or
           inputA = inputB;
     lt := not(inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0) and (
-          (inputA(31) = '1' and inputB(31) = '0') or
-          ( inputA(31) = '1' and inputB(31) = '1' and inputA(30 downto 0) > inputB(30 downto 0)) or
-          (inputA(31) = '0' and inputB(31) = '0' and inputA(30 downto 0) < inputB(30 downto 0))
-          );
+      (inputA(31) = '1' and inputB(31) = '0') or
+      ( inputA(31) = '1' and inputB(31) = '1' and inputA(30 downto 0) > inputB(30 downto 0)) or
+      (inputA(31) = '0' and inputB(31) = '0' and inputA(30 downto 0) < inputB(30 downto 0))
+      );
 
     return
       ((lt or eq) and mode = B_BLE) or

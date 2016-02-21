@@ -165,7 +165,9 @@ architecture twoproc of main is
     D:Decode_reg_t;
     EX:Exe_reg_t;
     WB:WB_reg_t;
+    --ここより下はデバッグや性能測定用の変数
     clk_count:dword;
+    mem_stalls:word;
   end record;
   constant r_init:reg_type :=(
     state=>init,
@@ -175,7 +177,8 @@ architecture twoproc of main is
     D=>Decode_reg_init,
     EX=>EXe_reg_init,
     WB=>WB_reg_init,
-    clk_count=>(others=>'0')
+    clk_count=>(others=>'0'),
+    mem_stalls=>(others=>'0')
     );
   signal r,rin:reg_type:=r_init;
   signal fpu_input:fpu_in_type:=fpu_in_init;
@@ -272,6 +275,14 @@ begin
             v.ex.result:=(others=>'-');
         end case;
 
+        --X形式の怪しい命令たちの処理
+        if r.d.inst_info.clkhigh then
+          v.ex.result:=r.clk_count(63 downto 32);
+        elsif r.d.inst_info.clklow then
+          v.ex.result:=r.clk_count(31 downto 0);
+        elsif r.d.inst_info.memstalls then
+          v.ex.result:=r.mem_stalls;
+        end if;
         --分岐方向を確定させる
         v.ex.BranchTaken:=IsBranch(src_reg(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch,v.ex.inst_info.fromFPR);
         if v.ex.BranchTaken then
@@ -336,6 +347,11 @@ begin
     --output and update
     rin.state<=v.state;
     rin.clk_count<=v.clk_count;
+    if r.ex.inst_info.Mem_RE and not(port_in.Mem_hit) then
+      rin.mem_stalls<=r.mem_stalls+1;
+    else
+      rin.mem_stalls<=r.mem_stalls;
+    end if;
     --from stage-F
     if stall_out.f_stall then
       rin.F<=r.F;
