@@ -266,22 +266,19 @@ package body ISA is
   function fcmp(inputA:word;inputB:word;mode:B_type)return boolean is
     variable lt : boolean;
     variable eq : boolean;
-    variable output:boolean;
   begin
-    eq := true when inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 else
-          true when inputA = inputB else
-          false;
-    lt := false when inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 else
-          true when inputA(31) = '1' and inputB(31) = '0' else
-          true when inputA(31) = '1' and inputB(31) = '1' and inputA(30 downto 0) > inputB(30 downto 0) else
-          true when inputA(31) = '0' and inputB(31) = '0' and inputA(30 downto 0) < inputB(30 downto 0) else
-          false;
+    eq := ( inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 ) or
+          inputA = inputB;
+    lt := not(inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0) and (
+          (inputA(31) = '1' and inputB(31) = '0') or
+          ( inputA(31) = '1' and inputB(31) = '1' and inputA(30 downto 0) > inputB(30 downto 0)) or
+          (inputA(31) = '0' and inputB(31) = '0' and inputA(30 downto 0) < inputB(30 downto 0))
+          );
 
-    output := (lt or eq) when mode = B_BLE else
-              lt         when mode = B_BLT else
-              eq         when mode = B_BEQ else
-              false;
-    return output;
+    return
+      ((lt or eq) and mode = B_BLE) or
+      (lt and  mode = B_BLT) or
+      (eq and mode = B_BEQ);
   end function;
 
 
