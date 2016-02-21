@@ -18,7 +18,7 @@ package body alu_package is
   function ALU(operand1:word;operand2:word;control:alu_control_type) return word is
     variable result:word;
   begin
-    result:=(others=>'X');
+    result:=(others=>'-');
     case control is
       when alu_nop=>
         result:=operand1;
@@ -31,7 +31,7 @@ package body alu_package is
       when alu_srl=>
         result:=operand1 srl to_integer(operand2);
       when others =>
-        result:=(others=>'X');
+        result:=(others=>'-');
     end case;
     return result;
   end function;

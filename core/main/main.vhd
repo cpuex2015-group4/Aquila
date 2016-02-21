@@ -26,12 +26,12 @@ package main_interface is
   end record;
   constant main_in_init:main_in_type:=(
     activate=>false,
-    Instruction=>(others=>'X'),
+    Instruction=>(others=>'-'),
     IO_full=>false,
     IO_empty=>false,
     IO_spilled=>false,
-    IO_data=>(others=>'X'),
-    Mem_data=>(others=>'X'),
+    IO_data=>(others=>'-'),
+    Mem_data=>(others=>'-'),
     Mem_hit=>false,
     init_information=>init_information_init
     );
@@ -48,10 +48,10 @@ package main_interface is
   constant main_out_init:main_out_type:=(
     PC=>(others=>'1'),
     Mem_addr=>(others=>'1'),
-    Mem_data=>(others=>'X'),
+    Mem_data=>(others=>'-'),
     Mem_WE=>false,
     Mem_RE=>false,
-    IO_data=>(others=>'X'),
+    IO_data=>(others=>'-'),
     IO_RE=>false,
     IO_WE=>false
     );
@@ -98,14 +98,14 @@ architecture twoproc of main is
   type state_type is (init,ready,running,hlt);
 
   type reg_file_t is array(0 to 31) of word;
-  constant reg_file_init:reg_file_t:=(others=>(others=>'X'));
+  constant reg_file_init:reg_file_t:=(others=>(others=>'-'));
 
 
   type Fetch_reg_t is record
     PC:word;
   end record;
   constant Fetch_reg_init:Fetch_reg_t:=(
-    PC=>(others=>'X')
+    PC=>(others=>'-')
     );
 
   type Decode_reg_t is record
@@ -114,9 +114,9 @@ architecture twoproc of main is
     jmp_addr:word;
   end record;
   constant Decode_reg_init:Decode_reg_t:=(
-    PC=>(others=>'X'),
+    PC=>(others=>'-'),
     inst_info=>inst_info_init,
-    JMP_ADDR=>(others=>'X')
+    JMP_ADDR=>(others=>'-')
     );
   type Exe_reg_t is record
     PC:word;
@@ -131,16 +131,16 @@ architecture twoproc of main is
     result:word;
   end record;
   constant Exe_reg_init:Exe_reg_t:=(
-    PC=>(others=>'X'),
+    PC=>(others=>'-'),
     inst_info=>inst_info_init, 
     BranchTaken=>false,
-    branch_addr=>(others=>'X'),
-    result=>(others=>'X'),
-    operand1=>(others=>'X'),
-    operand2=>(others=>'X'),
+    branch_addr=>(others=>'-'),
+    result=>(others=>'-'),
+    operand1=>(others=>'-'),
+    operand2=>(others=>'-'),
     Mem_addr=>(others=>'0'),
-    IO_data=>(others=>'X'),
-    Mem_data=>(others=>'X')
+    IO_data=>(others=>'-'),
+    Mem_data=>(others=>'-')
     );
   type WB_reg_t is record
     PC:word;
@@ -150,11 +150,11 @@ architecture twoproc of main is
     result:word;
   end record;
   constant WB_reg_init:WB_reg_t:=(
-    PC=>(others=>'X'),
+    PC=>(others=>'-'),
     inst_info=>inst_info_init,
     Is_Ex_Mem_data_saved=>false,
-    Ex_Mem_data=>(others=>'X'),
-    result=>(others=>'X')
+    Ex_Mem_data=>(others=>'-'),
+    result=>(others=>'-')
     );
 
   type reg_type is record
@@ -165,7 +165,9 @@ architecture twoproc of main is
     D:Decode_reg_t;
     EX:Exe_reg_t;
     WB:WB_reg_t;
+    --ここより下はデバッグや性能測定用の変数
     clk_count:dword;
+    mem_stalls:word;
   end record;
   constant r_init:reg_type :=(
     state=>init,
@@ -175,7 +177,8 @@ architecture twoproc of main is
     D=>Decode_reg_init,
     EX=>EXe_reg_init,
     WB=>WB_reg_init,
-    clk_count=>(others=>'0')
+    clk_count=>(others=>'0'),
+    mem_stalls=>(others=>'0')
     );
   signal r,rin:reg_type:=r_init;
   signal fpu_input:fpu_in_type:=fpu_in_init;
@@ -272,6 +275,14 @@ begin
             v.ex.result:=(others=>'-');
         end case;
 
+        --X形式の怪しい命令たちの処理
+        if r.d.inst_info.clkhigh then
+          v.ex.result:=r.clk_count(63 downto 32);
+        elsif r.d.inst_info.clklow then
+          v.ex.result:=r.clk_count(31 downto 0);
+        elsif r.d.inst_info.memstalls then
+          v.ex.result:=r.mem_stalls;
+        end if;
         --分岐方向を確定させる
         v.ex.BranchTaken:=IsBranch(src_reg(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch,v.ex.inst_info.fromFPR);
         if v.ex.BranchTaken then
@@ -280,7 +291,7 @@ begin
             resize(signed(v.ex.inst_info.immediate),32)
             );
         else
-          v.ex.branch_addr:=(others=>'X');
+          v.ex.branch_addr:=(others=>'-');
         end if;
 
         if v.ex.inst_info.mem_re or v.ex.inst_info.mem_we then  --memory 入出力
@@ -302,7 +313,7 @@ begin
         if v.ex.BranchTaken then
           --分岐が成立時
          --予測失敗しているのでこのステージをNOPに差し替える。
-          v.D.PC:=(others=>'X');
+          v.D.PC:=(others=>'-');
           v.D.inst_info:=inst_nop;
         else--非分岐。予測成功。
           v.D.PC:=r.F.PC;
@@ -336,6 +347,11 @@ begin
     --output and update
     rin.state<=v.state;
     rin.clk_count<=v.clk_count;
+    if r.ex.inst_info.Mem_RE and not(port_in.Mem_hit) then
+      rin.mem_stalls<=r.mem_stalls+1;
+    else
+      rin.mem_stalls<=r.mem_stalls;
+    end if;
     --from stage-F
     if stall_out.f_stall then
       rin.F<=r.F;
@@ -354,10 +370,10 @@ begin
     if stall_out.ex_stall then
       rin.Ex<=r.Ex;
       port_out.Mem_addr<=(others=>'1');
-      port_out.Mem_data<=(others=>'X');
+      port_out.Mem_data<=(others=>'-');
       port_out.Mem_we<=false;
       port_out.Mem_re<=false;
-      port_out.IO_data<=(others=>'X');
+      port_out.IO_data<=(others=>'-');
       port_out.IO_RE<=false;
       port_out.IO_WE<=false;
       fpu_input.alu_control<=alu_nop;

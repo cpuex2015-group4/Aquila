@@ -24,7 +24,7 @@ package fpu_interface is
     data_ready:boolean;
   end record;
   constant fpu_out_init:fpu_out_type:=(
-    result=>(others=>'X'),
+    result=>(others=>'-'),
     data_ready=>false
     );
 end package;
@@ -103,14 +103,14 @@ architecture twoproc of fpu is
     i2f:std_word;
   end record;
   constant result_init:result_type:=(
-    add=>(others=>'X'),
-    mul=>(others=>'X'),
-    inv=>(others=>'X'),
-    f2i=>(others=>'X'),
-    i2f=>(others=>'X')
+    add=>(others=>'-'),
+    mul=>(others=>'-'),
+    inv=>(others=>'-'),
+    f2i=>(others=>'-'),
+    i2f=>(others=>'-')
   );
   signal result:result_type:=result_init;
-  signal fadd_operand:word:=(others=>'X');
+  signal fadd_operand:word:=(others=>'-');
 begin
   fadd_operand<=(not port_in.operand2(31)) &  port_in.operand2(30 downto 0) when port_in.ALU_control= alu_fsub else
                  port_in.operand2;
