@@ -273,7 +273,7 @@ begin
         end case;
 
         --分岐方向を確定させる
-        v.ex.BranchTaken:=IsBranch(src_reg(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch);
+        v.ex.BranchTaken:=IsBranch(src_reg(to_integer(r.d.inst_info.rd)),v.ex.operand1,r.d.inst_info.branch,v.ex.inst_info.fromFPR);
         if v.ex.BranchTaken then
           v.ex.branch_addr:=unsigned(
             signed(v.ex.PC)+

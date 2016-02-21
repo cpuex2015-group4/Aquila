@@ -8,7 +8,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library work;
 use work.global_types.all;
-
 package ISA is
   constant ope_size:integer:=5;
   constant reg_addr_size:integer:=5;
@@ -133,7 +132,8 @@ package ISA is
     );
   constant inst_nop:inst_info_type:=inst_info_init;
   function Decode(inst:word) return inst_info_type;
-  function IsBranch(operand1:word;operand2:word;B:B_type) return boolean;
+  function fcmp(inputA:word;inputB:word;mode:B_type)return boolean;
+  function IsBranch(operand1:word;operand2:word;B:B_type;isFPR:boolean) return boolean;
 end package;
 
 package body ISA is
@@ -263,11 +263,35 @@ package body ISA is
     return info;
   end decode;
 
-  function IsBranch(operand1:word;operand2:word;B:B_type) return boolean is
+  function fcmp(inputA:word;inputB:word;mode:B_type)return boolean is
+    variable lt : boolean;
+    variable eq : boolean;
+    variable output:boolean;
+  begin
+    eq := true when inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 else
+          true when inputA = inputB else
+          false;
+    lt := false when inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 else
+          true when inputA(31) = '1' and inputB(31) = '0' else
+          true when inputA(31) = '1' and inputB(31) = '1' and inputA(30 downto 0) > inputB(30 downto 0) else
+          true when inputA(31) = '0' and inputB(31) = '0' and inputA(30 downto 0) < inputB(30 downto 0) else
+          false;
+
+    output := (lt or eq) when mode = B_BLE else
+              lt         when mode = B_BLT else
+              eq         when mode = B_BEQ else
+              false;
+    return output;
+  end function;
+
+
+  function IsBranch(operand1:word;operand2:word;B:B_type;isFPR:boolean) return boolean is
   begin
     return
+      (isFPR and fcmp(operand1,operand2,B)) or
       (signed(operand1)<signed(operand2) and B=B_BLT) or
       (signed(operand1)<=signed(operand2) and B=B_BLE) or
       (signed(operand1)=signed(operand2) and B=B_BEQ);
   end function;
+
 end ISA;

@@ -1,30 +1,30 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
+use work.global_types;
 
-entity fcmp is
-  port(
-   inputA : in  std_logic_vector (31 downto 0);
-	 inputB : in  std_logic_vector (31 downto 0);
-	 mode   : in  std_logic_vector ( 5 downto 0);  -- "111110" = le / "111100" = lt / "110010" = eq
-	 output : out std_logic);
-end fcmp;
+package fcmp_package is
+  function fcmp(inputA:word;inputB:word;mode:fcmp_mode)return boolean;
+end package;
 
-architecture struct of fcmp is
-	signal lt : std_logic;
-	signal eq : std_logic;
-begin
-	eq <= '1' when inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 else
-	      '1' when inputA = inputB else
-				'0';
-	lt <= '0' when inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 else
-	      '1' when inputA(31) = '1' and inputB(31) = '0' else
-	      '1' when inputA(31) = '1' and inputB(31) = '1' and inputA(30 downto 0) > inputB(30 downto 0) else
-				'1' when inputA(31) = '0' and inputB(31) = '0' and inputA(30 downto 0) < inputB(30 downto 0) else
-				'0';
+package body fcmp_package is
+  function fcmp(inputA:word;inputB:word;mode:B_type)return boolean is
+    variable lt : std_logic;
+    variable eq : std_logic;
+  begin
+    eq := '1' when inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 else
+          '1' when inputA = inputB else
+          '0';
+    lt := '0' when inputA(30 downto 0) = 0 and inputB(30 downto 0) = 0 else
+          '1' when inputA(31) = '1' and inputB(31) = '0' else
+          '1' when inputA(31) = '1' and inputB(31) = '1' and inputA(30 downto 0) > inputB(30 downto 0) else
+          '1' when inputA(31) = '0' and inputB(31) = '0' and inputA(30 downto 0) < inputB(30 downto 0) else
+          '0';
 
-	output <= (lt or eq) when mode = "111110" else
-	          lt         when mode = "111100" else
-						eq         when mode = "110010" else
-            '0';
-end struct;
+    output := (lt or eq) when mode = B_BLE else
+              lt         when mode = B_BLT else
+              eq         when mode = B_BEQ else
+              '0';
+    return output;
+  end function;
+end fcmp_package;
