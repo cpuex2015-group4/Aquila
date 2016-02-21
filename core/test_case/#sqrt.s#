@@ -1,0 +1,12 @@
+.data
+one:
+	.word 0x3f800000
+
+.text
+_sqrt
+
+	
+_leml_entry:
+	in %r4
+	add.s %f1,%f0,%f0
+	ld.s %f2,%r0,one
