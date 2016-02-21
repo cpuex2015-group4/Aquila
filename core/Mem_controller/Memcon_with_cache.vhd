@@ -71,7 +71,7 @@ begin
   cache_in.data<=memcon_in.input;
   cache_in.we<=memcon_in.we;
   cache_in.re<=memcon_in.re;
-  comb:process(r,Memcon_in,SRAM_ZD)
+  comb:process(r,Memcon_in,SRAM_ZD,cache_out)
     variable v:reg_type;
   begin
     v:=r;
@@ -89,8 +89,14 @@ begin
       v.data_from_sram:=(others=>'X');
     end if;
     --###################outputs
-    memcon_out.output<=r.data_from_sram;
-    memcon_out.hit<=r.snaps(2).re;
+    if cache_out.hit then
+      v.snaps(1).re:=false;
+      memcon_out.output<=cache_out.data;
+      memcon_out.hit<=true;
+    else
+      memcon_out.output<=r.data_from_sram;
+      memcon_out.hit<=r.snaps(2).re;
+    end if;
     if memcon_in.re or memcon_in.we then
       memcon_out.sram_addr<=memcon_in.addr;
     else

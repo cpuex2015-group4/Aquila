@@ -86,11 +86,15 @@ architecture twoproc of cache is
     state:state_type;
     lower_addr:unsigned(9 downto 0);
     next_line:line_type;
+    output:word;
+    hit:boolean;
   end record;
   constant r_init:reg_type :=(
     state=>free,
     lower_addr=>(others=>'0'),
-    next_line=>line_init
+    next_line=>line_init,
+    output=>(others=>'-'),
+    hit=>false
     );
   signal r,rin:reg_type:=r_init;
   signal reg_cache:cache_type:=cache_init;
@@ -101,7 +105,6 @@ begin
     variable this_line:line_type;
     variable the_way:way_type;
     variable next_line:line_type;
-    variable output:word;
   begin
     v:=r;
     this_line:=reg_cache(to_integer(port_in.addr(9 downto 0)));
@@ -146,10 +149,10 @@ begin
             the_way.data:=port_in.data;
           else--  port_in.reです
             if the_way.valid then
-              output:=the_way.data;
+              v.output:=the_way.data;
             else
               v.state:=wait1;
-              output:=(others=>'-');
+              v.output:=(others=>'-');
             end if;
           end if;
           next_line.ways(next_line.orders(0)):=the_way;
@@ -166,10 +169,11 @@ begin
     end case;
     v.next_line:=next_line;
     v.lower_addr:=port_in.addr(9 downto 0);
+    v.hit:=port_in.re and the_way.valid;
     --######################## Out and rin######################
     rin<=v;
-    port_out.data<=output;
-    port_out.hit<=port_in.re and the_way.valid;
+    port_out.data<=r.output;
+    port_out.hit<=r.hit;
     reg_cache(to_integer(r.lower_addr))<=r.next_line;
   end process;
 
