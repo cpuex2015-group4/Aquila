@@ -4,3 +4,8 @@
 core/working
 core/_impact.log
 core/_impact.cmd
+core/ipcore_dir/_xmsgs/pn_parser.xmsgs
+core/iseconfig/aquila.projectmgr
+core/iseconfig/aquila.xreport
+fpu/finv/ipcore_dir/_xmsgs/pn_parser.xmsgs
+
