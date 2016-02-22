@@ -4,7 +4,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity itof is
   Port (
-    clk    : in  std_logic;
     input  : in  STD_LOGIC_VECTOR (31 downto 0);
     output : out STD_LOGIC_VECTOR (31 downto 0));
 end itof;
@@ -17,14 +16,18 @@ architecture struct of itof is
 	signal mano : std_logic_vector (22 downto 0);
 	signal flag : std_logic;
 	signal flag2: std_logic;
+	signal zflag: std_logic;
 begin
   sign   <= '0'
 							when input(30 downto 0) = "0000000000000000000000000000000" else
 						input(31);
+	zflag  <= '1'
+							when input(30 downto 0) = "0000000000000000000000000000000" else
+						'0';
 
 	sint	 <= input(31 downto 0)
 							when input(31) = '0' else
-						"0" & (input(30 downto 0) xor "0000000000000000000000000000000");
+						"0" & ((input(30 downto 0) xor "1111111111111111111111111111111") + 1);
 
 -- shift
   mant   <= sint(29 downto 5) & "1"
@@ -99,7 +102,7 @@ begin
 
 	-- round nearest even
 	flag   <= '0'
-							when mant(2) = '0' or (mant(3) = '0' and mant(1) = '0' and mant(0) = '0') else
+							when mant(2) = '0' or mant(3 downto 0) = "0100" else
 						'1';
 
   -- kuriagari
@@ -177,5 +180,7 @@ begin
 							when sint( 0) = '1' else
 						"00000000";
 	
-	output <= sign & expo & mano;
+	output <= sign & expo & mano
+							when zflag = '0' else
+						x"00000000";
 end struct;
